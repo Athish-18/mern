@@ -1,17 +1,17 @@
-import { FaSearch } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { FaSearch } from 'react-icons/fa'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 export default function Header() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('')
+  const navigate = useNavigate()
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (searchTerm.trim()) {
-      navigate(`/search?q=${searchTerm}`);
+      navigate(`/search?q=${searchTerm}`)
     }
-  };
+  }
 
   return (
     <header className="bg-slate-200 shadow-md">
@@ -57,5 +57,5 @@ export default function Header() {
         </ul>
       </div>
     </header>
-  );
+  )
 }
