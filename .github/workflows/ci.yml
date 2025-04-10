@@ -29,4 +29,4 @@ jobs:
         # Remove 'continue-on-error' if you want ESLint to break the pipeline on error
 
       - name: 🧪 Run Jest Tests
-        run: npm test -- --watchAll=false
+        run: npx test -- --watchAll=false
