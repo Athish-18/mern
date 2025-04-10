@@ -23,7 +23,9 @@ jobs:
         run: npm install
 
       - name: 🧹 Run ESLint (Lint Check)
-        run: npx eslint . --ext .js,.jsx
-        continue-on-error: false
+        run: |
+          npx eslint . --ext .js,.jsx
 
       - name: 🧪 Run Jest Unit Tests
+        run: |
+          npx jest --coverage --
