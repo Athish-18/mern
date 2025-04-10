@@ -7,14 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  lint-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: ✅ Checkout repository
         uses: actions/checkout@v3
 
-      - name: 📦 Set up Node.js
+      - name: 📦 Setup Node.js 18
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -22,5 +22,8 @@ jobs:
       - name: 📥 Install dependencies
         run: npm install
 
-      - name: ✅ Build Check (if applicable)
-        run: echo "Build step completed!"
+      - name: 🧹 Run ESLint (Lint Check)
+        run: npx eslint . --ext .js,.jsx
+        continue-on-error: false
+
+      - name: 🧪 Run Jest Unit Tests
