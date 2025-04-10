@@ -7,14 +7,14 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-and-lint:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Checkout code
+      - name: ✅ Checkout repository
         uses: actions/checkout@v3
 
-      - name: 📦 Set up Node.js
+      - name: 📦 Setup Node.js 18
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -22,13 +22,14 @@ jobs:
       - name: 📥 Install dependencies
         run: npm install
 
-      - name: 🎨 Prettier - Format Check
+      - name: 🎨 Run Prettier (Format Check)
         run: npx prettier . --check
 
-      - name: 🧹 ESLint - Code Quality Check
-        run: npx eslint . --ext .js,.jsx || true
-        # Note: `|| true` prevents ESLint errors from crashing the whole workflow for now.
-        # Remove it if you want it to fail on issues.
+      - name: 🧹 Run ESLint (Lint Check)
+        run: |
+          npx eslint . --ext .js,.jsx
+        continue-on-error: true
+        # Remove `continue-on-error` if you want linting issues to fail the pipeline
 
-      - name: 🧪 Run Jest Tests
+      - name: 🧪 Run Jest Unit Tests
         run: npm test -- --watchAll=false
