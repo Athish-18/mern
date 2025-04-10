@@ -1,12 +1,19 @@
 import express from 'express'
-import { signup } from '../controller/auth.controller.js'
+import {
+  deleteUser,
+  test,
+  updateUser,
+  getUserListings,
+  getUser,
+} from '../controllers/user.controller.js'
+import { verifyToken } from '../utils/verifyUser.js'
 
-const userRouter = express.Router()
+const router = express.Router()
 
-userRouter.post('/signup', signup)
-// Define user routes
-userRouter.get('/', (req, res) => {
-  res.json({ message: 'User route' })
-})
+router.get('/test', test)
+router.post('/update/:id', verifyToken, updateUser)
+router.delete('/delete/:id', verifyToken, deleteUser)
+router.get('/listings/:id', verifyToken, getUserListings)
+router.get('/:id', verifyToken, getUser)
 
-export default userRouter
+export default router

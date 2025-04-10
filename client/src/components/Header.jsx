@@ -1,25 +1,34 @@
 import { FaSearch } from 'react-icons/fa'
 import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useSelector } from 'react-redux'
+import { useEffect, useState } from 'react'
 
 export default function Header() {
+  const { currentUser } = useSelector((state) => state.user)
   const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
-
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${searchTerm}`)
-    }
+    const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set('searchTerm', searchTerm)
+    const searchQuery = urlParams.toString()
+    navigate(`/search?${searchQuery}`)
   }
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const searchTermFromUrl = urlParams.get('searchTerm')
+    if (searchTermFromUrl) {
+      setSearchTerm(searchTermFromUrl)
+    }
+  }, [location.search])
   return (
     <header className="bg-slate-200 shadow-md">
       <div className="flex justify-between items-center max-w-6xl mx-auto p-3">
         <Link to="/">
           <h1 className="font-bold text-sm sm:text-xl flex flex-wrap">
-            <span className="text-slate-500">Dwell</span>
-            <span className="text-slate-700">Base</span>
+            <span className="text-slate-500">DWELL</span>
+            <span className="text-slate-700">BASE</span>
           </h1>
         </Link>
         <form
@@ -33,7 +42,7 @@ export default function Header() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button type="submit">
+          <button>
             <FaSearch className="text-slate-600" />
           </button>
         </form>
@@ -48,11 +57,16 @@ export default function Header() {
               About
             </li>
           </Link>
-          <Link to="/sign-in">
-            <li className="text-slate-700 hover:underline">Sign In</li>
-          </Link>
-          <Link to="/sign-up">
-            <li className="text-slate-700 hover:underline">Sign Up</li>
+          <Link to="/profile">
+            {currentUser ? (
+              <img
+                className="rounded-full h-7 w-7 object-cover"
+                src={currentUser.avatar}
+                alt="profile"
+              />
+            ) : (
+              <li className=" text-slate-700 hover:underline"> Sign in</li>
+            )}
           </Link>
         </ul>
       </div>
