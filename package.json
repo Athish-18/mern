@@ -5,7 +5,9 @@
   "scripts": {
     "test": "jest --coverage",
     "dev": "nodemon api/index.js",
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+     "lint": "eslint .",
+  "test": "jest"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
