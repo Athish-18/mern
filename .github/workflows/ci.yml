@@ -29,7 +29,7 @@ jobs:
       - name: Run ESLint
         run: |
           cd client  # Navigate into the client folder
-          npx eslint . --ext .js,.jsx,.ts,.tsx  # Run ESLint to lint the code
+          npx eslint .  # Run ESLint to lint the code without the --ext flag
 
       - name: Run Prettier Check
         run: |
