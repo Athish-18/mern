@@ -3,10 +3,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main
   pull_request:
     branches:
-      - main  # or your default branch
+      - main
 
 jobs:
   install-dependencies:
@@ -19,11 +19,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "16"  # Change this if you're using a different version of Node.js
+          node-version: "16" # Or "18" if you're using that for your environment
 
       - name: Install dependencies
         run: |
-          cd client
+          cd client  # Ensure that you're inside the client directory if needed
           npm install
 
   lint:
