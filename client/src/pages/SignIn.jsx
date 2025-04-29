@@ -1,46 +1,47 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import React from 'react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   signInStart,
   signInSuccess,
   signInFailure,
-} from '../redux/user/userSlice'
-import OAuth from '../components/OAth'
+} from '../redux/user/userSlice';
+import OAuth from '../components/OAth';
 
 export default function SignIn() {
-  const [formData, setFormData] = useState({})
-  const { loading, error } = useSelector((state) => state.user)
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const [formData, setFormData] = useState({});
+  const { loading, error } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.id]: e.target.value,
-    })
-  }
+    });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      dispatch(signInStart())
+      dispatch(signInStart());
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (!data.success) {
-        dispatch(signInFailure(data.message))
-        return
+        dispatch(signInFailure(data.message));
+        return;
       }
-      dispatch(signInSuccess(data))
-      navigate('/')
+      dispatch(signInSuccess(data));
+      navigate('/');
     } catch (error) {
-      dispatch(signInFailure(error.message))
+      dispatch(signInFailure(error.message));
     }
-  }
+  };
 
   return (
     <div className="p-3 max-w-lg mx-auto">
@@ -76,5 +77,5 @@ export default function SignIn() {
       </div>
       {error && <p className="text-red-500 mt-5">{error}</p>}
     </div>
-  )
+  );
 }

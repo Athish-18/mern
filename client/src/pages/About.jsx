@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 export default function About() {
   return (
@@ -27,5 +27,5 @@ export default function About() {
         making that a reality for each and every one of our clients.
       </p>
     </div>
-  )
+  );
 }

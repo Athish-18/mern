@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
-import { MdLocationOn } from 'react-icons/md'
+import { Link } from 'react-router-dom';
+import { MdLocationOn } from 'react-icons/md';
 
 export default function ListingItem({ listing }) {
   return (
@@ -48,5 +48,5 @@ export default function ListingItem({ listing }) {
         </div>
       </Link>
     </div>
-  )
+  );
 }

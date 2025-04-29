@@ -1,22 +1,23 @@
-import { GoogleAuthProvider, getAuth, signInWithPopup } from 'firebase/auth'
-import { app } from '../firebase'
-import { useDispatch } from 'react-redux'
-import { signInSuccess } from '../redux/user/userSlice'
-import { useNavigate } from 'react-router-dom'
+import React from 'react';
+import { GoogleAuthProvider, getAuth, signInWithPopup } from 'firebase/auth';
+import { app } from '../firebase';
+import { useDispatch } from 'react-redux';
+import { signInSuccess } from '../redux/user/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 export default function OAuth() {
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleGoogleClick = async () => {
     try {
-      const provider = new GoogleAuthProvider()
-      const auth = getAuth(app)
+      const provider = new GoogleAuthProvider();
+      const auth = getAuth(app);
 
-      console.log('Attempting Google Sign-In...')
-      const result = await signInWithPopup(auth, provider)
-      console.log('Google Sign-In Result:', result)
-      console.log('User Details:', result.user)
+      console.log('Attempting Google Sign-In...');
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google Sign-In Result:', result);
+      console.log('User Details:', result.user);
 
       // Send user data to backend
       const res = await fetch('/api/auth/google', {
@@ -29,17 +30,17 @@ export default function OAuth() {
           email: result.user.email,
           photo: result.user.photoURL,
         }),
-      })
+      });
 
-      const data = await res.json()
-      console.log('Backend Response:', data)
+      const data = await res.json();
+      console.log('Backend Response:', data);
 
-      dispatch(signInSuccess(data))
-      navigate('/')
+      dispatch(signInSuccess(data));
+      navigate('/');
     } catch (error) {
-      console.error('Could not sign in with Google:', error)
+      console.error('Could not sign in with Google:', error);
     }
-  }
+  };
 
   return (
     <button
@@ -49,5 +50,5 @@ export default function OAuth() {
     >
       Continue with Google
     </button>
-  )
+  );
 }
