@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon api/index.js",
-    "start": "node api/index.js"
+    "start": "node api/index.js",
+    "test": "jest"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -15,5 +16,17 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.10.0",
     "nodemon": "^3.1.9"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.26.9",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.4",
+    "supertest": "^7.1.0"
+  },
+  "jest": {
+    "roots": [
+      "<rootDir>/api"
+    ]
   }
 }
