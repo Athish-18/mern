@@ -3,10 +3,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main # Trigger on push to main branch
+      - main # Trigger on push to the main branch
   pull_request:
     branches:
-      - main # Trigger on PR to main branch
+      - main # Trigger on PR to the main branch
 
 jobs:
   test:
@@ -18,17 +18,18 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "16"
+          node-version: "18" # Set to Node.js 18
+
+      - name: Clean npm cache
+        run: npm cache clean --force # Clean the npm cache
 
       - name: Install dependencies
         run: |
-          cd api  # Navigate to the API folder where the package.json exists
-          npm install
+          npm install  # Install dependencies from the root package.json
 
       - name: Run tests
         run: |
-          cd api  # Navigate to the API folder where the tests are located
-          npm run test -- --testPathPattern=controllers  # Run tests from controllers folder
+          npm run test -- --testPathPattern=api/controllers  # Run tests located in the api/controllers folder
 
   docker:
     runs-on: ubuntu-latest
@@ -48,8 +49,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t atishkiran/dwellbase-api .  # Replace with your Docker Hub username and desired repository name
+          docker build -t atishkiran/dwellbase-api ./api  # Build Docker image from the api directory
 
       - name: Push Docker image to Docker Hub
         run: |
-          docker push atishkiran/dwellbase-api  # Replace with your Docker Hub username and desired repository name
+          docker push atishkiran/dwellbase-api  # Push Docker image to Docker Hub
