@@ -52,8 +52,10 @@ jobs:
 
       - name: Build Docker image
         run: |
-          # Build the Docker image with the context set to the root directory (dwellbase) and Dockerfile in the api directory
-          docker build -t atishkiran/dwellbase-api -f api/Dockerfile .
+          # Force rebuild the Docker image with no cache
+          docker build --no-cache -t atishkiran/dwellbase-api -f api/Dockerfile .
 
       - name: Push Docker image to Docker Hub
-        run: docker push atishkiran/dwellbase-api
+        run: |
+          # Push Docker image to Docker Hub with more verbose output
+          docker push atishkiran/dwellbase-api
