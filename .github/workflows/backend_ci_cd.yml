@@ -51,7 +51,9 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t atishkiran/dwellbase-api ./api # Build Docker image from the api directory
+        run: |
+          # Build the Docker image with the context set to the root directory (dwellbase) and Dockerfile in the api directory
+          docker build -t atishkiran/dwellbase-api -f api/Dockerfile .
 
       - name: Push Docker image to Docker Hub
         run: docker push atishkiran/dwellbase-api
