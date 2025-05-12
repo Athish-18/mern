@@ -1,4 +1,4 @@
-import mongoose  'mongoose'
+import mongoose from 'mongoose'
 
 const listingSchema = new mongoose.Schema(
   {
