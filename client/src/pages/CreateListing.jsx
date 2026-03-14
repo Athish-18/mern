@@ -1,11 +1,4 @@
 import { useState } from 'react'
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from 'firebase/storage'
-import { app } from '../firebase'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
@@ -61,28 +54,16 @@ export default function CreateListing() {
   }
 
   const storeImage = async (file) => {
-    return new Promise((resolve, reject) => {
-      const storage = getStorage(app)
-      const fileName = new Date().getTime() + file.name
-      const storageRef = ref(storage, fileName)
-      const uploadTask = uploadBytesResumable(storageRef, file)
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          console.log(`Upload is ${progress}% done`)
-        },
-        (error) => {
-          reject(error)
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL)
-          })
-        },
-      )
-    })
+    const data = new FormData()
+    data.append('file', file)
+    data.append('upload_preset', 'dwellBaseUploads')
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/dvel9khek/image/upload`,
+      { method: 'POST', body: data },
+    )
+    if (!res.ok) throw new Error('Image upload failed')
+    const json = await res.json()
+    return json.secure_url
   }
 
   const handleRemoveImage = (index) => {
