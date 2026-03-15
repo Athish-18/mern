@@ -1,9 +1,59 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MdLocationOn } from 'react-icons/md'
+import { FaHeart, FaRegHeart } from 'react-icons/fa'
+import { useSelector } from 'react-redux'
 
-export default function ListingItem({ listing }) {
+export default function ListingItem({ listing, initialFavorited = false }) {
+  const { currentUser } = useSelector((state) => state.user)
+  const [favorited, setFavorited] = useState(initialFavorited)
+  const [loading, setLoading] = useState(false)
+
+  // Check actual favorite status from server on mount (survives refresh)
+  useEffect(() => {
+    if (!currentUser) return
+    fetch(`/api/user/favorite/check/${listing._id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.favorited !== undefined) setFavorited(data.favorited)
+      })
+      .catch(() => {})
+  }, [listing._id, currentUser])
+
+  const handleFavorite = async (e) => {
+    e.preventDefault()   // stop the Link from navigating
+    e.stopPropagation()
+    if (!currentUser) return
+    setLoading(true)
+    try {
+      const method = favorited ? 'DELETE' : 'POST'
+      await fetch(`/api/user/favorite/${listing._id}`, { method })
+      setFavorited(!favorited)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="bg-white shadow-md hover:shadow-lg transition-shadow overflow-hidden rounded-lg w-full sm:w-[330px]">
+    <div className="bg-white shadow-md hover:shadow-lg transition-shadow overflow-hidden rounded-lg w-full sm:w-[330px] relative">
+      {/* Heart button */}
+      {currentUser && (
+        <button
+          onClick={handleFavorite}
+          disabled={loading}
+          className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded-full p-1.5 shadow hover:scale-110 transition-transform"
+          title={favorited ? 'Remove from favorites' : 'Save to favorites'}
+        >
+          {favorited ? (
+            <FaHeart className="text-red-500 text-lg" />
+          ) : (
+            <FaRegHeart className="text-gray-500 text-lg" />
+          )}
+        </button>
+      )}
+
       <Link to={`/listing/${listing._id}`}>
         <img
           src={

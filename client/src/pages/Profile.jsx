@@ -11,6 +11,7 @@ import {
 } from '../redux/user/userSlice'
 import { useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
+import ListingItem from '../components/ListingItem'
 export default function Profile() {
   const fileRef = useRef(null)
   const { currentUser, loading, error } = useSelector((state) => state.user)
@@ -21,6 +22,8 @@ export default function Profile() {
   const [updateSuccess, setUpdateSuccess] = useState(false)
   const [showListingsError, setShowListingsError] = useState(false)
   const [userListings, setUserListings] = useState([])
+  const [favorites, setFavorites] = useState([])
+  const [showFavoritesError, setShowFavoritesError] = useState(false)
   const dispatch = useDispatch()
 
   // firebase storage
@@ -129,6 +132,21 @@ export default function Profile() {
       setUserListings(data)
     } catch (error) {
       setShowListingsError(true)
+    }
+  }
+
+  const handleShowFavorites = async () => {
+    try {
+      setShowFavoritesError(false)
+      const res = await fetch(`/api/user/favorites/${currentUser._id}`)
+      const data = await res.json()
+      if (data.success === false) {
+        setShowFavoritesError(true)
+        return
+      }
+      setFavorites(data)
+    } catch (error) {
+      setShowFavoritesError(true)
     }
   }
 
@@ -276,6 +294,33 @@ export default function Profile() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Favorites section */}
+      <button
+        onClick={handleShowFavorites}
+        className="text-red-500 w-full mt-4"
+      >
+        ❤️ Show Favorites
+      </button>
+      <p className="text-red-700 mt-2">
+        {showFavoritesError ? 'Error showing favorites' : ''}
+      </p>
+      {favorites && favorites.length > 0 && (
+        <div className="flex flex-col gap-4 mt-2">
+          <h1 className="text-center mt-4 text-2xl font-semibold">
+            Your Favorites
+          </h1>
+          <div className="flex flex-wrap gap-4 justify-center">
+            {favorites.map((listing) => (
+              <ListingItem
+                key={listing._id}
+                listing={listing}
+                initialFavorited={true}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

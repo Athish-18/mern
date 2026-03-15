@@ -76,3 +76,52 @@ export const getUser = async (req, res, next) => {
     next(error)
   }
 }
+
+export const addFavorite = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $addToSet: { favorites: req.params.listingId } },
+      { new: true },
+    )
+    res.status(200).json(user.favorites)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const removeFavorite = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $pull: { favorites: req.params.listingId } },
+      { new: true },
+    )
+    res.status(200).json(user.favorites)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getFavorites = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id).populate('favorites')
+    if (!user) return next(errorHandler(404, 'User not found!'))
+    res.status(200).json(user.favorites)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const checkFavorite = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id)
+    if (!user) return next(errorHandler(404, 'User not found!'))
+    const favorited = user.favorites.some(
+      (id) => id.toString() === req.params.listingId,
+    )
+    res.status(200).json({ favorited })
+  } catch (error) {
+    next(error)
+  }
+}
