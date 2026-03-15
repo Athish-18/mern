@@ -10,6 +10,8 @@ export default function Search() {
     parking: false,
     furnished: false,
     offer: false,
+    minPrice: '',
+    maxPrice: '',
     sort: 'created_at',
     order: 'desc',
   })
@@ -43,6 +45,8 @@ export default function Search() {
         parking: parkingFromUrl === 'true' ? true : false,
         furnished: furnishedFromUrl === 'true' ? true : false,
         offer: offerFromUrl === 'true' ? true : false,
+        minPrice: urlParams.get('minPrice') || '',
+        maxPrice: urlParams.get('maxPrice') || '',
         sort: sortFromUrl || 'created_at',
         order: orderFromUrl || 'desc',
       })
@@ -91,6 +95,10 @@ export default function Search() {
       })
     }
 
+    if (e.target.id === 'minPrice' || e.target.id === 'maxPrice') {
+      setSidebardata({ ...sidebardata, [e.target.id]: e.target.value })
+    }
+
     if (e.target.id === 'sort_order') {
       const sort = e.target.value.split('_')[0] || 'created_at'
 
@@ -108,6 +116,8 @@ export default function Search() {
     urlParams.set('parking', sidebardata.parking)
     urlParams.set('furnished', sidebardata.furnished)
     urlParams.set('offer', sidebardata.offer)
+    urlParams.set('minPrice', sidebardata.minPrice)
+    urlParams.set('maxPrice', sidebardata.maxPrice)
     urlParams.set('sort', sidebardata.sort)
     urlParams.set('order', sidebardata.order)
     const searchQuery = urlParams.toString()
@@ -208,6 +218,31 @@ export default function Search() {
                 checked={sidebardata.furnished}
               />
               <span>Furnished</span>
+            </div>
+          </div>
+          {/* Price Range */}
+          <div className='flex flex-col gap-2'>
+            <label className='font-semibold'>Price Range (₹):</label>
+            <div className='flex items-center gap-2'>
+              <input
+                type='number'
+                id='minPrice'
+                placeholder='Min'
+                value={sidebardata.minPrice}
+                onChange={handleChange}
+                min='0'
+                className='border rounded-lg p-2 w-full'
+              />
+              <span className='text-gray-500'>–</span>
+              <input
+                type='number'
+                id='maxPrice'
+                placeholder='Max'
+                value={sidebardata.maxPrice}
+                onChange={handleChange}
+                min='0'
+                className='border rounded-lg p-2 w-full'
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">

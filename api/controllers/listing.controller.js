@@ -91,10 +91,10 @@ export const getListings = async (req, res, next) => {
     }
 
     const searchTerm = req.query.searchTerm || ''
-
     const sort = req.query.sort || 'createdAt'
-
     const order = req.query.order || 'desc'
+    const minPrice = parseInt(req.query.minPrice) || 0
+    const maxPrice = parseInt(req.query.maxPrice) || 1000000000
 
     const listings = await Listing.find({
       name: { $regex: searchTerm, $options: 'i' },
@@ -102,6 +102,10 @@ export const getListings = async (req, res, next) => {
       furnished,
       parking,
       type,
+      regularPrice: {
+        $gte: minPrice,
+        $lte: maxPrice,
+      },
     })
       .sort({ [sort]: order })
       .limit(limit)
