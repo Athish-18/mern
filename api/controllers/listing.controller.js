@@ -1,9 +1,24 @@
 import Listing from '../models/listing.model.js'
 import { errorHandler } from '../utils/error.js'
+import { getCoordinates } from '../utils/geocode.js'
 
 export const createListing = async (req, res, next) => {
   try {
-    const listing = await Listing.create(req.body)
+    let latitude
+    let longitude
+    try {
+      const coords = await getCoordinates(req.body.address)
+      latitude = coords.latitude
+      longitude = coords.longitude
+    } catch (err) {
+      console.log('Geocoding failed:', req.body.address)
+    }
+
+    const listing = await Listing.create({
+      ...req.body,
+      latitude,
+      longitude,
+    })
     return res.status(201).json(listing)
   } catch (error) {
     next(error)
@@ -56,6 +71,18 @@ export const getListing = async (req, res, next) => {
     if (!listing) {
       return next(errorHandler(404, 'Listing not found!'))
     }
+
+    if (!listing.latitude || !listing.longitude) {
+      try {
+        const { latitude, longitude } = await getCoordinates(listing.address)
+        listing.latitude = latitude
+        listing.longitude = longitude
+        await listing.save()
+      } catch (err) {
+        console.log('Geocoding failed for:', listing.address)
+      }
+    }
+
     res.status(200).json(listing)
   } catch (error) {
     next(error)

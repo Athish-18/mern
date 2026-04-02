@@ -14,6 +14,12 @@ const listingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    latitude: {
+      type: Number,
+    },
+    longitude: {
+      type: Number,
+    },
     regularPrice: {
       type: Number,
       required: true,

@@ -15,6 +15,7 @@ import {
   FaShare,
 } from 'react-icons/fa'
 import Contact from '../components/Contact'
+import ListingMap from '../components/ListingMap'
 
 // https://sabe.io/blog/javascript-format-numbers-commas#:~:text=The%20best%20way%20to%20format,format%20the%20number%20with%20commas.
 
@@ -136,6 +137,9 @@ export default function Listing() {
                 {listing.furnished ? 'Furnished' : 'Unfurnished'}
               </li>
             </ul>
+            <div className="mt-6 rounded-lg overflow-hidden shadow">
+              <ListingMap listing={listing} />
+            </div>
             {currentUser && listing.userRef !== currentUser._id && !contact && (
               <button
                 onClick={() => setContact(true)}
