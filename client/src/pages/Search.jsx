@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ListingItem from '../components/ListingItem'
+import SearchMap from '../components/SearchMap'
 
 export default function Search() {
   const navigate = useNavigate()
@@ -19,6 +20,8 @@ export default function Search() {
   const [loading, setLoading] = useState(false)
   const [listings, setListings] = useState([])
   const [showMore, setShowMore] = useState(false)
+  const [activeId, setActiveId] = useState(null)
+  const cardRefs = useRef({})
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
@@ -264,33 +267,64 @@ export default function Search() {
           </button>
         </form>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <h1 className="text-3xl font-semibold border-b p-3 text-slate-700 mt-5">
           Listing results:
         </h1>
-        <div className="p-7 flex flex-wrap gap-4">
-          {!loading && listings.length === 0 && (
-            <p className="text-xl text-slate-700">No listing found!</p>
-          )}
-          {loading && (
-            <p className="text-xl text-slate-700 text-center w-full">
-              Loading...
-            </p>
-          )}
 
-          {!loading &&
-            listings &&
-            listings.map((listing) => (
-              <ListingItem key={listing._id} listing={listing} />
-            ))}
+        <div className="flex flex-col lg:flex-row gap-4 p-4">
+          {/* LEFT — listing cards (scrollable) */}
+          <div className="flex flex-col gap-4 flex-1 overflow-y-auto max-h-screen pr-1">
+            {!loading && listings.length === 0 && (
+              <p className="text-xl text-slate-700">No listing found!</p>
+            )}
+            {loading && (
+              <p className="text-xl text-slate-700 text-center w-full">
+                Loading...
+              </p>
+            )}
+            {!loading &&
+              listings &&
+              listings.map((listing) => (
+                <div
+                  key={listing._id}
+                  ref={(el) => { cardRefs.current[listing._id] = el }}
+                  className={`transition-all duration-300 rounded-xl ${
+                    activeId === listing._id
+                      ? 'ring-2 ring-blue-500 shadow-lg scale-[1.01]'
+                      : ''
+                  }`}
+                  onMouseEnter={() => setActiveId(listing._id)}
+                  onMouseLeave={() => setActiveId(null)}
+                >
+                  <ListingItem listing={listing} />
+                </div>
+              ))}
+            {showMore && (
+              <button
+                onClick={onShowMoreClick}
+                className="text-green-700 hover:underline p-7 text-center w-full"
+              >
+                Show more
+              </button>
+            )}
+          </div>
 
-          {showMore && (
-            <button
-              onClick={onShowMoreClick}
-              className="text-green-700 hover:underline p-7 text-center w-full"
-            >
-              Show more
-            </button>
+          {/* RIGHT — sticky map with full upgrades */}
+          {!loading && listings.length > 0 && (
+            <div className="lg:w-[480px] lg:sticky lg:top-20 lg:self-start" style={{ height: '80vh', minHeight: '480px' }}>
+              <SearchMap
+                listings={listings}
+                activeId={activeId}
+                onMarkerClick={(id) => {
+                  setActiveId(id)
+                  const card = cardRefs.current[id]
+                  if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                }}
+              />
+            </div>
           )}
         </div>
       </div>
