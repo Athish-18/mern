@@ -117,6 +117,11 @@ export const getListings = async (req, res, next) => {
       type = { $in: ['sale', 'rent'] }
     }
 
+    // Dynamic precise filters
+    const filterQuery = {}
+    if (req.query.bedrooms) filterQuery.bedrooms = parseInt(req.query.bedrooms)
+    if (req.query.bathrooms) filterQuery.bathrooms = parseInt(req.query.bathrooms)
+
     const searchTerm = req.query.searchTerm || ''
     const sort = req.query.sort || 'createdAt'
     const order = req.query.order || 'desc'
@@ -124,11 +129,16 @@ export const getListings = async (req, res, next) => {
     const maxPrice = parseInt(req.query.maxPrice) || 1000000000
 
     const listings = await Listing.find({
-      name: { $regex: searchTerm, $options: 'i' },
+      $or: [
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { address: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
+      ],
       offer,
       furnished,
       parking,
       type,
+      ...filterQuery,
       regularPrice: {
         $gte: minPrice,
         $lte: maxPrice,
