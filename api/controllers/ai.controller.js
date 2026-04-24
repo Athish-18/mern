@@ -167,3 +167,74 @@ Rules for searchFilters (Only output if isSearch is true):
     res.status(500).json({ message: 'AI chat failed', error: err.message })
   }
 }
+
+export const aiInsight = async (req, res) => {
+  try {
+    const propertyData = req.body
+
+    if (!propertyData || !propertyData.name) {
+      return res.status(400).json({ message: 'Property details are required' })
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ message: 'GROQ_API_KEY is not configured on the server.' })
+    }
+
+    const { name, address, price, type, bedrooms, bathrooms, furnished, parking } = propertyData
+    
+    let descriptionStr = `Name: ${name}, Address: ${address}, Price: ₹${price}, Type: ${type}`
+    if (bedrooms) descriptionStr += `, Bedrooms: ${bedrooms}`
+    if (bathrooms) descriptionStr += `, Bathrooms: ${bathrooms}`
+    descriptionStr += `, Furnished: ${furnished ? 'Yes' : 'No'}, Parking: ${parking ? 'Yes' : 'No'}`
+
+    const systemPrompt = {
+      role: 'system',
+      content: `You are an expert real-estate agent. Provide a single, engaging sentence of insight about the following property, highlighting its target demographic or key benefits based on its features.
+
+Your ONLY allowed output is a raw JSON object (no markdown, no quotes around it, just JSON).
+
+JSON Schema:
+{
+  "insight": "Your single sentence insight."
+}`
+    }
+
+    const userMessage = {
+      role: 'user',
+      content: `Property Details: ${descriptionStr}`
+    }
+
+    try {
+      const groqRes = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          response_format: { type: 'json_object' },
+          messages: [systemPrompt, userMessage],
+        }),
+      })
+
+      const groqData = await groqRes.json()
+      
+      if (!groqRes.ok) {
+        throw new Error(groqData?.error?.message || 'Groq API Error')
+      }
+
+      const rawText = groqData.choices?.[0]?.message?.content ?? '{}'
+      const parsed = JSON.parse(rawText)
+      
+      return res.status(200).json({ insight: parsed.insight || 'This property offers a great blend of value and convenience.' })
+    } catch (apiError) {
+      console.warn('[AI Insight] Groq failed. Using generic fallback!', apiError.message)
+      return res.status(200).json({ insight: 'A fantastic property offering excellent value in a prime location.' })
+    }
+  } catch (err) {
+    console.error('[AI Insight] Unexpected error:', err)
+    res.status(500).json({ message: 'AI insight failed', error: err.message })
+  }
+}
+

@@ -28,6 +28,8 @@ export default function Listing() {
   const [contact, setContact] = useState(false)
   const params = useParams()
   const { currentUser } = useSelector((state) => state.user)
+  const [insight, setInsight] = useState(null)
+  const [insightLoading, setInsightLoading] = useState(false)
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -50,6 +52,36 @@ export default function Listing() {
     }
     fetchListing()
   }, [params.listingId])
+
+  useEffect(() => {
+    const fetchInsight = async () => {
+      if (!listing) return
+      try {
+        setInsightLoading(true)
+        const res = await fetch('/api/ai/insight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: listing.name,
+            address: listing.address,
+            price: listing.offer ? listing.discountPrice : listing.regularPrice,
+            type: listing.type,
+            bedrooms: listing.bedrooms,
+            bathrooms: listing.bathrooms,
+            furnished: listing.furnished,
+            parking: listing.parking,
+          }),
+        })
+        const data = await res.json()
+        setInsight(data.insight)
+      } catch (err) {
+        console.warn('Failed to fetch AI insight', err)
+      } finally {
+        setInsightLoading(false)
+      }
+    }
+    fetchInsight()
+  }, [listing])
 
   return (
     <main>
@@ -111,6 +143,22 @@ export default function Listing() {
                 </p>
               )}
             </div>
+            
+            {/* ── AI Insight Box ── */}
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mt-2 mb-2 shadow-sm flex gap-3 items-start relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
+                <div className="text-xl mt-0.5">✨</div>
+                <div>
+                   <p className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                       AI Property Insight 
+                       {insightLoading && <span className="text-xs font-normal text-indigo-600 animate-pulse">Analyzing...</span>}
+                   </p>
+                   <p className="text-indigo-800 text-sm leading-relaxed">
+                       {insight ? insight : (insightLoading ? 'Generating optimal insights for this listing...' : 'Insight unavailable.')}
+                   </p>
+                </div>
+            </div>
+
             <p className="text-slate-800">
               <span className="font-semibold text-black">Description - </span>
               {listing.description}
