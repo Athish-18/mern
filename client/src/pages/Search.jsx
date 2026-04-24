@@ -23,10 +23,21 @@ export default function Search() {
   const [activeId, setActiveId] = useState(null)
   const cardRefs = useRef({})
 
-  // ── AI Search ────────────────────────────────────────────────────────────
+  // ── AI Chat Assistant ────────────────────────────────────────────────────────────
   const [aiQuery, setAiQuery] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+  
+  // The conversation history array holding objects { role: 'user' | 'assistant', content: string }
+  const [conversation, setConversation] = useState([])
+  const chatEndRef = useRef(null)
+
+  // Scroll chat to bottom on new messages
+  useEffect(() => {
+    if(chatEndRef.current) {
+        chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [conversation])
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
@@ -144,26 +155,40 @@ export default function Search() {
     setListings([...listings, ...data])
   }
 
-  // ── AI Search handler ─────────────────────────────────────────────────────
-  const handleAiSearch = async () => {
+  // ── AI Chat handler ─────────────────────────────────────────────────────
+  const handleAiChatSubmit = async () => {
     if (!aiQuery.trim()) return
+    const userMessage = { role: 'user', content: aiQuery }
+    const updatedConversation = [...conversation, userMessage]
+    
+    setConversation(updatedConversation)
+    setAiQuery('')
     setAiLoading(true)
     setAiError('')
+    
     try {
-      const res = await fetch('/api/ai/search', {
+      const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: aiQuery }),
+        body: JSON.stringify({ messages: updatedConversation }),
       })
       const data = await res.json()
+      
       if (!res.ok) {
-        setAiError(data.message || 'AI search failed')
+        setAiError(data.message || 'AI chat failed')
         return
       }
-      setListings(data.listings)
-      setShowMore(false)
+
+      // Append assistant's reply
+      setConversation(prev => [...prev, { role: 'assistant', content: data.reply }])
+
+      // If AI determined this was a search, refresh listings
+      if (data.isSearch && data.listings) {
+        setListings(data.listings)
+        setShowMore(false)
+      }
     } catch {
-      setAiError('Network error — could not reach AI search.')
+      setAiError('Network error — could not reach AI assistant.')
     } finally {
       setAiLoading(false)
     }
@@ -171,75 +196,116 @@ export default function Search() {
 
   return (
     <div className="flex flex-col">
-      {/* ── AI Search Bar ──────────────────────────────────────────────────── */}
+      {/* ── AI Chat Assistant ──────────────────────────────────────────────────── */}
       <div
+        className="w-full flex justify-center py-6 border-b"
         style={{
           background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
           borderBottom: '1px solid #334155',
         }}
-        className="w-full px-6 py-4 flex flex-col gap-2"
       >
-        <div className="flex items-center gap-1 mb-1">
-          <span style={{ fontSize: '18px' }}>✨</span>
-          <span
-            style={{
-              background: 'linear-gradient(90deg, #818cf8, #c084fc)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 700,
-              fontSize: '14px',
-              letterSpacing: '0.05em',
-            }}
-          >
-            AI SEARCH
-          </span>
+        <div className="w-full max-w-4xl px-4 flex flex-col gap-4">
+            <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">✨</span>
+                <span
+                    style={{
+                    background: 'linear-gradient(90deg, #818cf8, #c084fc)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontWeight: 700,
+                    fontSize: '18px',
+                    letterSpacing: '0.05em',
+                    }}
+                >
+                    AI SEARCH ASSISTANT
+                </span>
+            </div>
+
+            {/* Chat History Box */}
+            <div 
+                className="w-full flex flex-col gap-3 overflow-y-auto rounded-xl p-4 shadow-inner"
+                style={{
+                    maxHeight: '350px',
+                    minHeight: '120px',
+                    background: 'rgba(15, 23, 42, 0.4)',
+                    border: '1px solid #334155'
+                }}
+            >
+                {conversation.length === 0 && (
+                    <div className="text-center text-slate-400 mt-6 italic">
+                        Start chatting! Try "Find me cheap homes in BTM" or "Only show 2BHK".
+                    </div>
+                )}
+                {conversation.map((msg, i) => (
+                    <div 
+                        key={i} 
+                        className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm flex-shrink-0 ${
+                            msg.role === 'user' 
+                            ? 'self-end bg-indigo-600 text-white rounded-br-none' 
+                            : 'self-start bg-slate-700 text-slate-100 rounded-bl-none shadow-md'
+                        }`}
+                        style={{ lineHeight: '1.5' }}
+                    >
+                        {msg.content}
+                    </div>
+                ))}
+                {aiLoading && (
+                    <div className="self-start text-xs font-semibold text-slate-400 mt-1">
+                       Assistant is thinking...
+                    </div>
+                )}
+                <div ref={chatEndRef} />
+            </div>
+
+            {/* Chat Input */}
+            <div className="flex gap-2 w-full mt-2">
+                <input
+                    type="text"
+                    placeholder='Type your message...'
+                    value={aiQuery}
+                    onChange={(e) => setAiQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAiChatSubmit()}
+                    style={{
+                        background: '#1e293b',
+                        border: '1px solid #475569',
+                        color: '#f1f5f9',
+                        borderRadius: '24px',
+                        padding: '12px 20px',
+                        fontSize: '15px',
+                        flex: 1,
+                        outline: 'none',
+                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                    }}
+                />
+                <button
+                    onClick={handleAiChatSubmit}
+                    disabled={aiLoading}
+                    style={{
+                        background: aiLoading
+                            ? '#4c1d95'
+                            : 'linear-gradient(135deg, #6366f1, #a855f7)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '24px',
+                        padding: '0 24px',
+                        fontWeight: 700,
+                        fontSize: '15px',
+                        cursor: aiLoading ? 'not-allowed' : 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'transform 0.2s, opacity 0.2s',
+                    }}
+                    onMouseEnter={(e) => !aiLoading && (e.target.style.transform = 'scale(1.03)')}
+                    onMouseLeave={(e) => !aiLoading && (e.target.style.transform = 'scale(1)')}
+                >
+                    {aiLoading ? '⏳' : 'Send'}
+                </button>
+            </div>
+            {aiError && (
+                <p style={{ color: '#f87171', fontSize: '13px', margin: 0, paddingLeft: '10px' }}>
+                    ⚠ {aiError}
+                </p>
+            )}
         </div>
-        <div className="flex gap-2 w-full">
-          <input
-            id="ai-search-input"
-            type="text"
-            placeholder='e.g. "2BHK under 20k in BTM with parking"'
-            value={aiQuery}
-            onChange={(e) => setAiQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
-            style={{
-              background: '#1e293b',
-              border: '1px solid #475569',
-              color: '#f1f5f9',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              flex: 1,
-              outline: 'none',
-            }}
-          />
-          <button
-            id="ai-search-btn"
-            onClick={handleAiSearch}
-            disabled={aiLoading}
-            style={{
-              background: aiLoading
-                ? '#4c1d95'
-                : 'linear-gradient(135deg, #6366f1, #a855f7)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '10px 20px',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: aiLoading ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            {aiLoading ? '⏳ Searching…' : '🔮 AI Search'}
-          </button>
-        </div>
-        {aiError && (
-          <p style={{ color: '#f87171', fontSize: '13px', margin: 0 }}>
-            ⚠ {aiError}
-          </p>
-        )}
       </div>
 
       {/* ── Sidebar + Results layout ──────────────────────────────────────── */}
