@@ -17,8 +17,8 @@ export default function ListingMap({ listing }) {
           <b>{listing.name}</b> <br />
           ₹
           {listing.offer
-            ? listing.discountPrice.toLocaleString('en-US')
-            : listing.regularPrice.toLocaleString('en-US')}
+            ? listing.discountPrice.toLocaleString('en-IN')
+            : listing.regularPrice.toLocaleString('en-IN')}
           {listing.type === 'rent' && ' / month'}
         </Popup>
       </Marker>
