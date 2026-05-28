@@ -197,39 +197,19 @@ export default function Search() {
   return (
     <div className="flex flex-col">
       {/* ── AI Chat Assistant ──────────────────────────────────────────────────── */}
-      <div
-        className="w-full flex justify-center py-6 border-b"
-        style={{
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-          borderBottom: '1px solid #334155',
-        }}
-      >
-        <div className="w-full max-w-4xl px-4 flex flex-col gap-4">
-            <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">✨</span>
-                <span
-                    style={{
-                    background: 'linear-gradient(90deg, #818cf8, #c084fc)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    fontWeight: 700,
-                    fontSize: '18px',
-                    letterSpacing: '0.05em',
-                    }}
-                >
+      <div className="w-full flex justify-center py-10 bg-slate-50 dark:bg-zinc-950/50 border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
+        <div className="w-full max-w-4xl px-4 flex flex-col gap-6">
+            <div className="flex items-center gap-3 mb-2">
+                <span className="text-3xl">✨</span>
+                <span className="font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
                     AI SEARCH ASSISTANT
                 </span>
             </div>
 
             {/* Chat History Box */}
             <div 
-                className="w-full flex flex-col gap-3 overflow-y-auto rounded-xl p-4 shadow-inner"
-                style={{
-                    maxHeight: '350px',
-                    minHeight: '120px',
-                    background: 'rgba(15, 23, 42, 0.4)',
-                    border: '1px solid #334155'
-                }}
+                className="w-full flex flex-col gap-4 overflow-y-auto rounded-3xl p-6 shadow-inner bg-white/50 dark:bg-black/20 border border-gray-200 dark:border-white/5 backdrop-blur-md"
+                style={{ maxHeight: '400px', minHeight: '150px' }}
             >
                 {conversation.length === 0 && (
                     <div className="text-center text-slate-400 mt-6 italic">
@@ -258,50 +238,25 @@ export default function Search() {
             </div>
 
             {/* Chat Input */}
-            <div className="flex gap-2 w-full mt-2">
+            <div className="flex gap-3 w-full mt-2 relative">
                 <input
                     type="text"
-                    placeholder='Type your message...'
+                    placeholder="Ask about properties... (e.g. 'Show me 2BHK in BTM Layout under 20k')"
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAiChatSubmit()}
-                    style={{
-                        background: '#1e293b',
-                        border: '1px solid #475569',
-                        color: '#f1f5f9',
-                        borderRadius: '24px',
-                        padding: '12px 20px',
-                        fontSize: '15px',
-                        flex: 1,
-                        outline: 'none',
-                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                    }}
+                    className="flex-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-white/10 rounded-full pl-6 pr-32 py-4 text-slate-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-sm transition-all"
                 />
                 <button
                     onClick={handleAiChatSubmit}
                     disabled={aiLoading}
-                    style={{
-                        background: aiLoading
-                            ? '#4c1d95'
-                            : 'linear-gradient(135deg, #6366f1, #a855f7)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '24px',
-                        padding: '0 24px',
-                        fontWeight: 700,
-                        fontSize: '15px',
-                        cursor: aiLoading ? 'not-allowed' : 'pointer',
-                        whiteSpace: 'nowrap',
-                        transition: 'transform 0.2s, opacity 0.2s',
-                    }}
-                    onMouseEnter={(e) => !aiLoading && (e.target.style.transform = 'scale(1.03)')}
-                    onMouseLeave={(e) => !aiLoading && (e.target.style.transform = 'scale(1)')}
+                    className="absolute right-2 top-2 bottom-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full px-8 font-bold tracking-wide hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-70 flex items-center justify-center min-w-[100px]"
                 >
-                    {aiLoading ? '⏳' : 'Send'}
+                    {aiLoading ? '⏳' : 'SEND'}
                 </button>
             </div>
             {aiError && (
-                <p style={{ color: '#f87171', fontSize: '13px', margin: 0, paddingLeft: '10px' }}>
+                <p className="text-red-500 text-sm pl-4 font-medium">
                     ⚠ {aiError}
                 </p>
             )}
@@ -309,147 +264,114 @@ export default function Search() {
       </div>
 
       {/* ── Sidebar + Results layout ──────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row">
-        <div className="p-7 border-b-2 md:border-r-2 md:min-h-screen">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-            <div className="flex items-center gap-2">
-              <label className="whitespace-nowrap font-semibold">
-                Search Term:
-              </label>
-              <input
-                type="text"
-                id="searchTerm"
-                placeholder="Search..."
-                className="border rounded-lg p-3 w-full"
-                value={sidebardata.searchTerm}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap items-center">
-              <label className="font-semibold">Type:</label>
-              <div className="flex gap-2">
+      <div className="flex flex-col lg:flex-row max-w-[1500px] mx-auto w-full gap-8 p-4 sm:p-6 lg:p-8">
+        {/* Floating Sidebar */}
+        <div className="lg:w-[340px] shrink-0">
+          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-xl dark:shadow-black/20 p-6 sm:p-8 lg:sticky lg:top-24">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">
+                  Search Term
+                </label>
                 <input
-                  type="checkbox"
-                  id="all"
-                  className="w-5"
+                  type="text"
+                  id="searchTerm"
+                  placeholder="Location, property name..."
+                  className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm"
+                  value={sidebardata.searchTerm}
                   onChange={handleChange}
-                  checked={sidebardata.type === 'all'}
-                />
-                <span>Rent &amp; Sale</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="rent"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={sidebardata.type === 'rent'}
-                />
-                <span>Rent</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="sale"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={sidebardata.type === 'sale'}
-                />
-                <span>Sale</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="offer"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={sidebardata.offer}
-                />
-                <span>Offer</span>
-              </div>
-            </div>
-            <div className="flex gap-2 flex-wrap items-center">
-              <label className="font-semibold">Amenities:</label>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="parking"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={sidebardata.parking}
-                />
-                <span>Parking</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="checkbox"
-                  id="furnished"
-                  className="w-5"
-                  onChange={handleChange}
-                  checked={sidebardata.furnished}
-                />
-                <span>Furnished</span>
-              </div>
-            </div>
-            {/* Price Range */}
-            <div className="flex flex-col gap-2">
-              <label className="font-semibold">Price Range (₹):</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  id="minPrice"
-                  placeholder="Min"
-                  value={sidebardata.minPrice}
-                  onChange={handleChange}
-                  min="0"
-                  className="border rounded-lg p-2 w-full"
-                />
-                <span className="text-gray-500">–</span>
-                <input
-                  type="number"
-                  id="maxPrice"
-                  placeholder="Max"
-                  value={sidebardata.maxPrice}
-                  onChange={handleChange}
-                  min="0"
-                  className="border rounded-lg p-2 w-full"
                 />
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="font-semibold">Sort:</label>
-              <select
-                onChange={handleChange}
-                defaultValue={'created_at_desc'}
-                id="sort_order"
-                className="border rounded-lg p-3"
-              >
-                <option value="regularPrice_desc">Price high to low</option>
-                <option value="regularPrice_asc">Price low to hight</option>
-                <option value="createdAt_desc">Latest</option>
-                <option value="createdAt_asc">Oldest</option>
-              </select>
-            </div>
-            <button className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95">
-              Search
-            </button>
-          </form>
+              <div className="flex flex-col gap-3">
+                <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">Property Type</label>
+                <div className="flex gap-4 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="all" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.type === 'all'} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium">Any</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="rent" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.type === 'rent'} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium">Rent</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="sale" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.type === 'sale'} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium">Sale</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="offer" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.offer} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium">Offer</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">Amenities</label>
+                <div className="flex gap-4 flex-wrap">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="parking" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.parking} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium">Parking</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="furnished" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.furnished} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium">Furnished</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div className="flex flex-col gap-3">
+                <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">Price Range (₹)</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number" id="minPrice" placeholder="Min" min="0"
+                    className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm"
+                    value={sidebardata.minPrice} onChange={handleChange}
+                  />
+                  <span className="text-gray-400 font-medium">–</span>
+                  <input
+                    type="number" id="maxPrice" placeholder="Max" min="0"
+                    className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm"
+                    value={sidebardata.maxPrice} onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">Sort By</label>
+                <select
+                  onChange={handleChange}
+                  defaultValue={'created_at_desc'}
+                  id="sort_order"
+                  className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm cursor-pointer"
+                >
+                  <option value="regularPrice_desc">Price: High to Low</option>
+                  <option value="regularPrice_asc">Price: Low to High</option>
+                  <option value="createdAt_desc">Latest Additions</option>
+                  <option value="createdAt_asc">Oldest First</option>
+                </select>
+              </div>
+
+              <button className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-4 rounded-xl font-bold uppercase tracking-widest hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-2">
+                Search Properties
+              </button>
+            </form>
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-semibold border-b p-3 text-slate-700 mt-5">
-            Listing results:
+        <div className="flex-1 min-w-0 flex flex-col gap-6">
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-gray-100 px-2 mt-2">
+            Property Results
           </h1>
 
-          <div className="flex flex-col lg:flex-row gap-4 p-4">
+          <div className="flex flex-col lg:flex-row gap-8">
             {/* LEFT — listing cards (scrollable) */}
-            <div className="flex flex-col gap-4 flex-1 overflow-y-auto max-h-screen pr-1">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 overflow-y-auto max-h-screen pr-2 pb-10 content-start">
               {!loading && listings.length === 0 && (
-                <p className="text-xl text-slate-700">No listing found!</p>
+                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-300 dark:border-white/10 text-center">No properties found matching your criteria.</p>
               )}
               {loading && (
-                <p className="text-xl text-slate-700 text-center w-full">
-                  Loading...
+                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 text-center p-4">
+                  Loading properties...
                 </p>
               )}
               {!loading &&
@@ -474,9 +396,9 @@ export default function Search() {
               {showMore && (
                 <button
                   onClick={onShowMoreClick}
-                  className="text-green-700 hover:underline p-7 text-center w-full"
+                  className="col-span-full mt-2 bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700/80 p-4 font-bold text-center transition-all shadow-sm hover:shadow"
                 >
-                  Show more
+                  Show More Properties
                 </button>
               )}
             </div>
@@ -484,8 +406,8 @@ export default function Search() {
             {/* RIGHT — sticky map */}
             {!loading && listings.length > 0 && (
               <div
-                className="lg:w-[480px] lg:sticky lg:top-20 lg:self-start"
-                style={{ height: '80vh', minHeight: '480px' }}
+                className="lg:w-[480px] xl:w-[540px] lg:sticky lg:top-24 lg:self-start drop-shadow-xl"
+                style={{ height: 'calc(100vh - 120px)', minHeight: '480px' }}
               >
                 <SearchMap
                   listings={listings}

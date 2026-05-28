@@ -104,9 +104,9 @@ export default function Listing() {
               </SwiperSlide>
             ))}
           </Swiper>
-          <div className="fixed top-[13%] right-[3%] z-10 border rounded-full w-12 h-12 flex justify-center items-center bg-slate-100 cursor-pointer">
+          <div className="fixed top-[13%] right-[3%] z-10 border dark:border-zinc-700 rounded-full w-12 h-12 flex justify-center items-center bg-slate-100 dark:bg-zinc-800 cursor-pointer">
             <FaShare
-              className="text-slate-500"
+              className="text-slate-500 dark:text-gray-300"
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href)
                 setCopied(true)
@@ -117,19 +117,19 @@ export default function Listing() {
             />
           </div>
           {copied && (
-            <p className="fixed top-[23%] right-[5%] z-10 rounded-md bg-slate-100 p-2">
+            <p className="fixed top-[23%] right-[5%] z-10 rounded-md bg-slate-100 dark:bg-zinc-800 dark:text-gray-200 p-2">
               Link copied!
             </p>
           )}
           <div className="flex flex-col max-w-4xl mx-auto p-3 my-7 gap-4">
-            <p className="text-2xl font-semibold">
+            <p className="text-2xl font-semibold dark:text-gray-200">
               {listing.name} - ₹{' '}
               {listing.offer
                 ? listing.discountPrice.toLocaleString('en-IN')
                 : listing.regularPrice.toLocaleString('en-IN')}
               {listing.type === 'rent' && ' / month'}
             </p>
-            <p className="flex items-center mt-6 gap-2 text-slate-600  text-sm">
+            <p className="flex items-center mt-6 gap-2 text-slate-600 dark:text-gray-400 text-sm">
               <FaMapMarkerAlt className="text-green-700" />
               {listing.address}
             </p>
@@ -145,25 +145,25 @@ export default function Listing() {
             </div>
             
             {/* ── AI Insight Box ── */}
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mt-2 mb-2 shadow-sm flex gap-3 items-start relative overflow-hidden">
+            <div className="bg-indigo-50 dark:bg-zinc-800 border border-indigo-200 dark:border-zinc-700 rounded-lg p-4 mt-2 mb-2 shadow-sm flex gap-3 items-start relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
                 <div className="text-xl mt-0.5">✨</div>
                 <div>
-                   <p className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+                   <p className="font-bold text-indigo-900 dark:text-indigo-300 mb-1 flex items-center gap-2">
                        AI Property Insight 
                        {insightLoading && <span className="text-xs font-normal text-indigo-600 animate-pulse">Analyzing...</span>}
                    </p>
-                   <p className="text-indigo-800 text-sm leading-relaxed">
+                   <p className="text-indigo-800 dark:text-gray-300 text-sm leading-relaxed">
                        {insight ? insight : (insightLoading ? 'Generating optimal insights for this listing...' : 'Insight unavailable.')}
                    </p>
                 </div>
             </div>
 
-            <p className="text-slate-800">
-              <span className="font-semibold text-black">Description - </span>
+            <p className="text-slate-800 dark:text-gray-300">
+              <span className="font-semibold text-black dark:text-gray-200">Description - </span>
               {listing.description}
             </p>
-            <ul className="text-green-900 font-semibold text-sm flex flex-wrap items-center gap-4 sm:gap-6">
+            <ul className="text-green-900 dark:text-emerald-400 font-semibold text-sm flex flex-wrap items-center gap-4 sm:gap-6">
               <li className="flex items-center gap-1 whitespace-nowrap ">
                 <FaBed className="text-lg" />
                 {listing.bedrooms > 1

@@ -68,11 +68,11 @@ export default function SearchMap({ listings, activeId, onMarkerClick }) {
 
   if (validListings.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full bg-slate-100 rounded-xl border border-slate-200 min-h-[400px]">
+      <div className="flex items-center justify-center h-full bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-3xl border border-gray-200 dark:border-white/10 shadow-xl dark:shadow-black/20 min-h-[400px]">
         <div className="text-center">
           <p className="text-4xl mb-2">🗺️</p>
-          <p className="text-slate-500 font-semibold">No map locations available</p>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-500 dark:text-gray-300 font-semibold">No map locations available</p>
+          <p className="text-slate-400 dark:text-gray-400 text-sm mt-1">
             Add coordinates to listings to see them here
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function SearchMap({ listings, activeId, onMarkerClick }) {
       center={center}
       zoom={12}
       style={{ height: '100%', width: '100%', minHeight: '480px' }}
-      className="rounded-xl shadow-md z-0"
+      className="rounded-3xl shadow-xl dark:shadow-black/20 border border-gray-200 dark:border-white/10 z-0 overflow-hidden"
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -112,36 +112,38 @@ export default function SearchMap({ listings, activeId, onMarkerClick }) {
             click: () => onMarkerClick && onMarkerClick(listing._id),
           }}
         >
-          <Popup maxWidth={200}>
+          <Popup maxWidth={220} className="rounded-xl">
             <Link
               to={`/listing/${listing._id}`}
-              className="block no-underline"
+              className="block no-underline group"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img
-                src={listing.imageUrls?.[0]}
-                alt={listing.name}
-                className="w-48 h-28 object-cover rounded mb-2"
-                style={{ display: 'block' }}
-              />
+              <div className="overflow-hidden rounded-lg mb-2 relative">
+                <img
+                  src={listing.imageUrls?.[0]}
+                  alt={listing.name}
+                  className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-500"
+                  style={{ display: 'block' }}
+                />
+              </div>
               <p
-                className="font-bold text-slate-800 text-sm mb-0.5 truncate"
-                style={{ maxWidth: '190px' }}
+                className="font-bold text-slate-800 text-base mb-1 truncate group-hover:text-emerald-600 transition-colors"
+                style={{ maxWidth: '200px' }}
               >
                 {listing.name}
               </p>
-              <p className="text-green-700 font-semibold text-sm">
+              <p className="text-emerald-600 font-extrabold text-sm mb-1">
                 ₹
                 {listing.offer
                   ? listing.discountPrice?.toLocaleString('en-IN')
                   : listing.regularPrice?.toLocaleString('en-IN')}
                 {listing.type === 'rent' && (
-                  <span className="text-slate-500 font-normal"> / month</span>
+                  <span className="text-slate-500 font-medium text-xs"> / mo</span>
                 )}
               </p>
-              <p className="text-xs text-blue-600 mt-1 hover:underline">
-                View listing →
+              <p className="text-xs font-semibold text-indigo-500 mt-1 hover:text-indigo-600 transition-colors flex items-center gap-1">
+                View details <span className="text-lg leading-none">›</span>
               </p>
             </Link>
           </Popup>

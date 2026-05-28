@@ -23,7 +23,7 @@ export default function Contact({ listing }) {
     <>
       {landlord && (
         <div className="flex flex-col gap-2">
-          <p>
+          <p className="dark:text-gray-200">
             Contact <span className="font-semibold">{landlord.username}</span>{' '}
             for{' '}
             <span className="font-semibold">{listing.name.toLowerCase()}</span>
@@ -35,7 +35,7 @@ export default function Contact({ listing }) {
             value={message}
             onChange={onChange}
             placeholder="Enter your message here..."
-            className="w-full border p-3 rounded-lg"
+            className="w-full border p-3 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white dark:placeholder-gray-400"
           ></textarea>
 
           <a

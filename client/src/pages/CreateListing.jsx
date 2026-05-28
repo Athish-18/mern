@@ -136,7 +136,7 @@ export default function CreateListing() {
   }
   return (
     <main className="p-3 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-semibold text-center my-7">
+      <h1 className="text-3xl font-semibold text-center my-7 dark:text-gray-200">
         Create a Listing
       </h1>
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
@@ -144,7 +144,7 @@ export default function CreateListing() {
           <input
             type="text"
             placeholder="Name"
-            className="border p-3 rounded-lg"
+            className="border p-3 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
             id="name"
             maxLength="62"
             minLength="10"
@@ -155,7 +155,7 @@ export default function CreateListing() {
           <textarea
             type="text"
             placeholder="Description"
-            className="border p-3 rounded-lg"
+            className="border p-3 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
             id="description"
             required
             onChange={handleChange}
@@ -164,7 +164,7 @@ export default function CreateListing() {
           <input
             type="text"
             placeholder="Address"
-            className="border p-3 rounded-lg"
+            className="border p-3 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
             id="address"
             required
             onChange={handleChange}
@@ -230,7 +230,7 @@ export default function CreateListing() {
                 min="1"
                 max="10"
                 required
-                className="p-3 border border-gray-300 rounded-lg"
+                className="p-3 border border-gray-300 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
                 onChange={handleChange}
                 value={formData.bedrooms}
               />
@@ -243,7 +243,7 @@ export default function CreateListing() {
                 min="1"
                 max="10"
                 required
-                className="p-3 border border-gray-300 rounded-lg"
+                className="p-3 border border-gray-300 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
                 onChange={handleChange}
                 value={formData.bathrooms}
               />
@@ -256,7 +256,7 @@ export default function CreateListing() {
                 min="50"
                 max="10000000"
                 required
-                className="p-3 border border-gray-300 rounded-lg"
+                className="p-3 border border-gray-300 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
                 onChange={handleChange}
                 value={formData.regularPrice}
               />
@@ -275,7 +275,7 @@ export default function CreateListing() {
                   min="0"
                   max="10000000"
                   required
-                  className="p-3 border border-gray-300 rounded-lg"
+                  className="p-3 border border-gray-300 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
                   onChange={handleChange}
                   value={formData.discountPrice}
                 />
@@ -291,16 +291,16 @@ export default function CreateListing() {
           </div>
         </div>
         <div className="flex flex-col flex-1 gap-4">
-          <p className="font-semibold">
+          <p className="font-semibold dark:text-gray-200">
             Images:
-            <span className="font-normal text-gray-600 ml-2">
+            <span className="font-normal text-gray-600 dark:text-gray-400 ml-2">
               The first image will be the cover (max 6)
             </span>
           </p>
           <div className="flex gap-4">
             <input
               onChange={(e) => setFiles(e.target.files)}
-              className="p-3 border border-gray-300 rounded w-full"
+              className="p-3 border border-gray-300 rounded w-full dark:border-zinc-600 dark:text-gray-300"
               type="file"
               id="images"
               accept="image/*"
@@ -322,7 +322,7 @@ export default function CreateListing() {
             formData.imageUrls.map((url, index) => (
               <div
                 key={url}
-                className="flex justify-between p-3 border items-center"
+                className="flex justify-between p-3 border dark:border-zinc-600 items-center"
               >
                 <img
                   src={url}
