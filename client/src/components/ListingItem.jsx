@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MdLocationOn } from 'react-icons/md'
 import { FaHeart, FaRegHeart } from 'react-icons/fa'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { useCompare } from '../context/CompareContext'
+import { recordInteraction } from '../redux/preferences/preferencesSlice'
 
 export default function ListingItem({ listing, initialFavorited = false }) {
   const { currentUser } = useSelector((state) => state.user)
+  const dispatch = useDispatch()
   const [favorited, setFavorited] = useState(initialFavorited)
   const [loading, setLoading] = useState(false)
+  const { toggleCompare, compareListings } = useCompare()
+
+  const isComparing = compareListings.some((l) => l._id === listing._id)
 
   // Check actual favorite status from server on mount (survives refresh)
   useEffect(() => {
@@ -28,6 +34,11 @@ export default function ListingItem({ listing, initialFavorited = false }) {
     try {
       const method = favorited ? 'DELETE' : 'POST'
       await fetch(`/api/user/favorite/${listing._id}`, { method })
+      
+      if (!favorited) {
+         dispatch(recordInteraction({ listing, weight: 3 }))
+      }
+      
       setFavorited(!favorited)
     } catch (error) {
       console.error(error)
@@ -100,6 +111,22 @@ export default function ListingItem({ listing, initialFavorited = false }) {
           </div>
         </div>
       </Link>
+      <div className="absolute top-3 left-3 z-20">
+        <button
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            toggleCompare(listing)
+          }}
+          className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-sm transition-all duration-300 border ${
+            isComparing
+              ? 'bg-indigo-500 text-white border-indigo-400'
+              : 'bg-white/80 dark:bg-zinc-900/80 text-slate-700 dark:text-gray-200 border-transparent dark:border-white/10 hover:bg-white dark:hover:bg-zinc-800'
+          }`}
+        >
+          {isComparing ? '✓ Comparing' : '+ Compare'}
+        </button>
+      </div>
     </div>
   )
 }

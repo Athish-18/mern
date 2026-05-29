@@ -12,6 +12,7 @@ import {
 import { useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
 import ListingItem from '../components/ListingItem'
+import { usePersonalizedRecommendations } from '../hooks/usePersonalizedRecommendations'
 export default function Profile() {
   const fileRef = useRef(null)
   const { currentUser, loading, error } = useSelector((state) => state.user)
@@ -24,6 +25,7 @@ export default function Profile() {
   const [userListings, setUserListings] = useState([])
   const [favorites, setFavorites] = useState([])
   const [showFavoritesError, setShowFavoritesError] = useState(false)
+  const { recommendations, loading: recLoading } = usePersonalizedRecommendations()
   const dispatch = useDispatch()
 
   // firebase storage
@@ -324,6 +326,34 @@ export default function Profile() {
           </div>
         </div>
       )}
+
+      {/* Personalized Recommendations */}
+      <div className="flex flex-col gap-4 mt-8 mb-10">
+         <h1 className="text-center text-2xl font-semibold dark:text-gray-200">
+           Your Personalized Recommendations
+         </h1>
+         {recLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="w-full aspect-[4/3] bg-slate-200 dark:bg-zinc-800/80 rounded-2xl animate-shimmer border border-transparent dark:border-white/5"></div>
+              ))}
+            </div>
+         ) : recommendations.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              {recommendations.map((listing) => (
+                <div key={listing._id} className="w-full">
+                  <ListingItem listing={listing} />
+                </div>
+              ))}
+            </div>
+         ) : (
+            <div className="mt-4 p-8 border border-dashed border-gray-300 dark:border-white/10 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-white/5">
+               <p className="text-slate-600 dark:text-gray-300 font-semibold mb-2">No recommendations yet</p>
+               <p className="text-slate-500 dark:text-gray-400 text-sm">Explore properties and save favorites to get personalized suggestions!</p>
+            </div>
+         )}
+      </div>
+
     </div>
   )
 }

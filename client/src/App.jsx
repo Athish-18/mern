@@ -11,10 +11,13 @@ import UpdateListing from './pages/UpdateListing'
 import Listing from './pages/Listing'
 import Search from './pages/Search'
 import ThemeProvider from './components/ThemeProvider'
-
+import { CompareProvider } from './context/CompareContext'
+import ComparisonTray from './components/ComparisonTray'
+import ComparisonModal from './components/ComparisonModal'
 export default function App() {
   return (
     <ThemeProvider>
+      <CompareProvider>
       <BrowserRouter>
         <Header />
         <Routes>
@@ -34,7 +37,10 @@ export default function App() {
             />
           </Route>
         </Routes>
+        <ComparisonTray />
+        <ComparisonModal />
       </BrowserRouter>
+      </CompareProvider>
     </ThemeProvider>
   )
 }

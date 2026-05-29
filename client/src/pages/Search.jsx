@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { recordSearchFilters } from '../redux/preferences/preferencesSlice'
 import ListingItem from '../components/ListingItem'
 import SearchMap from '../components/SearchMap'
 
 export default function Search() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const dispatch = useDispatch()
   const [sidebardata, setSidebardata] = useState({
     searchTerm: '',
     type: 'all',
@@ -22,6 +26,8 @@ export default function Search() {
   const [showMore, setShowMore] = useState(false)
   const [activeId, setActiveId] = useState(null)
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
+  const [aiExplanation, setAiExplanation] = useState(null)
+  const [aiDidSearch, setAiDidSearch] = useState(false)
   const cardRefs = useRef({})
 
   // ── AI Chat Assistant ────────────────────────────────────────────────────────────
@@ -128,6 +134,16 @@ export default function Search() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    setAiExplanation(null)
+    setAiDidSearch(false)
+    
+    dispatch(recordSearchFilters({
+      searchTerm: sidebardata.searchTerm,
+      type: sidebardata.type,
+      minPrice: sidebardata.minPrice,
+      maxPrice: sidebardata.maxPrice
+    }))
+    
     const urlParams = new URLSearchParams()
     urlParams.set('searchTerm', sidebardata.searchTerm)
     urlParams.set('type', sidebardata.type)
@@ -188,6 +204,12 @@ export default function Search() {
       if (data.isSearch && data.listings) {
         setListings(data.listings)
         setShowMore(false)
+        setAiExplanation(data.explanation || [])
+        setAiDidSearch(true)
+        
+        if (data.filters) {
+           dispatch(recordSearchFilters(data.filters))
+        }
       }
     } catch {
       setAiError('Network error — could not reach AI assistant.')
@@ -196,16 +218,33 @@ export default function Search() {
     }
   }
 
+  const handleResetAiSearch = () => {
+    setConversation([])
+    setAiQuery('')
+    setAiExplanation(null)
+    setAiDidSearch(false)
+  }
+
   return (
     <div className="flex flex-col animate-fade-in">
       {/* ── AI Chat Assistant ──────────────────────────────────────────────────── */}
       <div className="w-full flex justify-center py-10 bg-slate-50 dark:bg-zinc-950/50 border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
         <div className="w-full max-w-4xl px-4 flex flex-col gap-6">
-            <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">✨</span>
-                <span className="font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
-                    AI SEARCH ASSISTANT
-                </span>
+            <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-3">
+                    <span className="text-3xl">✨</span>
+                    <span className="font-extrabold text-xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
+                        AI SEARCH ASSISTANT
+                    </span>
+                </div>
+                {conversation.length > 0 && (
+                    <button 
+                        onClick={handleResetAiSearch}
+                        className="text-xs font-bold uppercase tracking-wider bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-gray-300 py-2 px-4 rounded-full transition-colors flex items-center gap-1"
+                    >
+                        <span>⟳</span> New Search
+                    </button>
+                )}
             </div>
 
             {/* Chat History Box */}
@@ -233,7 +272,7 @@ export default function Search() {
                 ))}
                 {aiLoading && (
                     <div className="self-start text-xs font-semibold text-slate-400 mt-1">
-                       Assistant is thinking...
+                       Analyzing requirements...
                     </div>
                 )}
                 <div ref={chatEndRef} />
@@ -401,6 +440,55 @@ export default function Search() {
           <h1 className="hidden lg:block text-2xl font-extrabold tracking-tight text-slate-800 dark:text-gray-100 px-2 mt-2">
             Property Results
           </h1>
+
+          {/* ── AI Reasoning Card ── */}
+          {aiDidSearch && aiExplanation && (
+            <div className="mx-2 bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl shadow-xl shadow-black/20 p-6 animate-fade-in relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
+                
+                {listings.length > 0 ? (
+                    <>
+                        <h3 className="text-xl font-extrabold text-slate-800 dark:text-gray-100 mb-4 flex items-center gap-2">
+                           <span className="text-2xl">✨</span> AI matched {listings.length} {listings.length === 1 ? 'property' : 'properties'}
+                        </h3>
+                        <p className="text-sm font-semibold text-slate-500 dark:text-gray-400 mb-3 uppercase tracking-wider">
+                           Active Search Criteria:
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                            {aiExplanation.map((reason, idx) => (
+                                <span key={idx} className="bg-slate-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1.5 rounded-full text-sm font-medium text-slate-700 dark:text-gray-200 flex items-center gap-1.5 shadow-sm">
+                                   <span className="text-emerald-500 font-bold">✓</span> {reason}
+                                </span>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <h3 className="text-xl font-extrabold text-slate-800 dark:text-gray-100 mb-2 flex items-center gap-2">
+                           <span className="text-2xl">✨</span> No properties matched your request.
+                        </h3>
+                        <p className="text-sm text-slate-600 dark:text-gray-300 mb-4">
+                           We couldn't find any exact matches for these criteria:
+                        </p>
+                        <div className="flex flex-wrap gap-3 mb-5">
+                            {aiExplanation.map((reason, idx) => (
+                                <span key={idx} className="bg-slate-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-1 rounded-full text-sm text-slate-700 dark:text-gray-200 flex items-center gap-1">
+                                   <span className="text-emerald-500 font-bold">✓</span> {reason}
+                                </span>
+                            ))}
+                        </div>
+                        <div className="bg-slate-50 dark:bg-black/20 rounded-xl p-4 border border-gray-100 dark:border-white/5">
+                            <p className="font-semibold text-slate-700 dark:text-gray-300 mb-2">Try adjusting your search:</p>
+                            <ul className="list-disc pl-5 text-sm text-slate-600 dark:text-gray-400 space-y-1">
+                                <li>Increasing your budget limit</li>
+                                <li>Expanding the location or searching a broader area</li>
+                                <li>Reducing the number of specific filters (e.g. furnished, parking)</li>
+                            </ul>
+                        </div>
+                    </>
+                )}
+            </div>
+          )}
 
           <div className="flex flex-col xl:flex-row gap-8">
             {/* LEFT — listing cards (scrollable) */}

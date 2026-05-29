@@ -5,12 +5,16 @@ import { Navigation } from 'swiper/modules'
 import SwiperCore from 'swiper'
 import 'swiper/css/bundle'
 import ListingItem from '../components/ListingItem'
+import { useSelector } from 'react-redux'
+import { usePersonalizedRecommendations } from '../hooks/usePersonalizedRecommendations'
 
 export default function Home() {
   const [offerListings, setOfferListings] = useState([])
   const [saleListings, setSaleListings] = useState([])
   const [rentListings, setRentListings] = useState([])
   const [loading, setLoading] = useState(true)
+  const { currentUser } = useSelector((state) => state.user)
+  const { recommendations, loading: recLoading } = usePersonalizedRecommendations()
   SwiperCore.use([Navigation])
   useEffect(() => {
     const fetchOfferListings = async () => {
@@ -91,7 +95,41 @@ export default function Home() {
 
       {/* listing results for offer, sale and rent */}
 
-      <div className="max-w-[1500px] mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-16 my-8">
+      <div className="max-w-7xl mx-auto p-4 flex flex-col gap-12 my-10 sm:my-20">
+        
+        {/* Personalized Recommendations Section */}
+        {currentUser && (
+          <div className="mb-8">
+             <div className="my-3">
+               <h2 className="text-3xl font-extrabold text-slate-800 dark:text-gray-100 flex items-center gap-2">
+                  <span className="text-emerald-500">✨</span> Recommended For You
+               </h2>
+               <p className="text-sm text-slate-500 dark:text-gray-400 mt-1 font-medium">
+                  Based on your searches, wishlist, and browsing activity.
+               </p>
+             </div>
+             
+             {recLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="w-full aspect-[4/3] bg-slate-200 dark:bg-zinc-800/80 rounded-2xl animate-shimmer border border-transparent dark:border-white/5"></div>
+                  ))}
+                </div>
+             ) : recommendations.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+                  {recommendations.map((listing) => (
+                    <ListingItem listing={listing} key={listing._id} />
+                  ))}
+                </div>
+             ) : (
+                <div className="mt-4 p-8 border border-dashed border-gray-300 dark:border-white/10 rounded-2xl flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-white/5">
+                   <p className="text-slate-600 dark:text-gray-300 font-semibold mb-2">No recommendations yet</p>
+                   <p className="text-slate-500 dark:text-gray-400 text-sm">Explore properties, save favorites, and run searches to receive personalized recommendations!</p>
+                </div>
+             )}
+          </div>
+        )}
+        
         {loading && (
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-4">

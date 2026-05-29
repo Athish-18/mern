@@ -57,7 +57,9 @@ JSON Schema:
 }
 
 Rules for searchFilters (Only output if isSearch is true):
-- Maintain previous constraints! If the user previously asked for 'BTM' and now says 'make it under 20k', your searchFilters must include BOTH 'BTM' and maxPrice 20000.
+- Accumulate and maintain constraints! If the user previously asked for 'BTM' and now says 'make it under 20k', your searchFilters must include BOTH 'BTM' and maxPrice 20000.
+- If the user asks to remove or clear a filter (e.g. "remove budget", "any price", "not furnished"), explicitly revert that field to its default value (null, false, or '').
+- Ensure your conversational 'reply' acknowledges what filters you added, changed, or removed (e.g., "I updated the search to show furnished properties only.").
 - Do NOT include adjectives like 'beautiful' or 'cheap' in the searchTerm.`,
       }
 
@@ -156,11 +158,32 @@ Rules for searchFilters (Only output if isSearch is true):
       }
     }
 
+    let explanation = []
+    if (aiDecision.isSearch && aiDecision.searchFilters) {
+      const f = aiDecision.searchFilters
+      if (f.searchTerm) explanation.push(`Location: ${f.searchTerm}`)
+      if (f.type && f.type !== 'all') explanation.push(f.type === 'rent' ? 'For Rent' : 'For Sale')
+      if (f.bedrooms) explanation.push(`${f.bedrooms} Bedrooms`)
+      if (f.bathrooms) explanation.push(`${f.bathrooms} Bathrooms`)
+      if (f.furnished) explanation.push('Furnished properties')
+      if (f.parking) explanation.push('Parking available')
+      if (f.offer) explanation.push('Special Offers')
+      
+      if (f.minPrice && f.maxPrice) {
+        explanation.push(`Budget: ₹${f.minPrice.toLocaleString('en-IN')} - ₹${f.maxPrice.toLocaleString('en-IN')}`)
+      } else if (f.minPrice) {
+        explanation.push(`Budget above ₹${f.minPrice.toLocaleString('en-IN')}`)
+      } else if (f.maxPrice) {
+        explanation.push(`Budget under ₹${f.maxPrice.toLocaleString('en-IN')}`)
+      }
+    }
+
     return res.status(200).json({
       reply: aiDecision.reply,
       isSearch: aiDecision.isSearch,
       listings: aiDecision.isSearch ? listings : null,
       filters: aiDecision.searchFilters,
+      explanation: aiDecision.isSearch ? explanation : null,
     })
   } catch (err) {
     console.error('[AI Chat] Unexpected error:', err)
@@ -238,3 +261,81 @@ JSON Schema:
   }
 }
 
+export const aiCompare = async (req, res) => {
+  try {
+    const { propertyA, propertyB } = req.body
+
+    if (!propertyA || !propertyB) {
+      return res.status(400).json({ message: 'Both properties are required for comparison' })
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ message: 'GROQ_API_KEY is not configured on the server.' })
+    }
+
+    const formatProp = (p) => `Name: ${p.name}, Price: ₹${p.offer ? p.discountPrice : p.regularPrice}, Location: ${p.address}, Type: ${p.type}, Beds: ${p.bedrooms}, Baths: ${p.bathrooms}, Furnished: ${p.furnished ? 'Yes' : 'No'}, Parking: ${p.parking ? 'Yes' : 'No'}`
+
+    const systemPrompt = {
+      role: 'system',
+      content: `You are an expert real-estate advisor. Analyze and compare the following two properties.
+      
+Your ONLY allowed output is a raw JSON object (no markdown, no quotes around it, just JSON).
+
+JSON Schema:
+{
+  "propertyAStrengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "propertyBStrengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "recommendation": {
+    "chooseAIf": ["Reason 1", "Reason 2"],
+    "chooseBIf": ["Reason 1", "Reason 2"]
+  }
+}
+
+Keep strengths and reasons concise (max 1 sentence each). Base your comparison on price, location, size, and amenities.`
+    }
+
+    const userMessage = {
+      role: 'user',
+      content: `Property A: ${formatProp(propertyA)}\n\nProperty B: ${formatProp(propertyB)}`
+    }
+
+    try {
+      const groqRes = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          response_format: { type: 'json_object' },
+          messages: [systemPrompt, userMessage],
+        }),
+      })
+
+      const groqData = await groqRes.json()
+      
+      if (!groqRes.ok) {
+        throw new Error(groqData?.error?.message || 'Groq API Error')
+      }
+
+      const rawText = groqData.choices?.[0]?.message?.content ?? '{}'
+      const parsed = JSON.parse(rawText)
+      
+      return res.status(200).json(parsed)
+    } catch (apiError) {
+      console.warn('[AI Compare] Groq failed. Using generic fallback!', apiError.message)
+      return res.status(200).json({
+        propertyAStrengths: ['Great value for the price', 'Excellent layout'],
+        propertyBStrengths: ['Premium location', 'Better amenities'],
+        recommendation: {
+          chooseAIf: ['Budget is a priority', 'You prefer this specific layout'],
+          chooseBIf: ['Location is your main priority', 'You want premium amenities']
+        }
+      })
+    }
+  } catch (err) {
+    console.error('[AI Compare] Unexpected error:', err)
+    res.status(500).json({ message: 'AI comparison failed', error: err.message })
+  }
+}

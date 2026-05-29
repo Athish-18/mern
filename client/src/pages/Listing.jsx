@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import SwiperCore from 'swiper'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { Navigation } from 'swiper/modules'
 import 'swiper/css/bundle'
 import {
@@ -16,6 +16,9 @@ import {
 } from 'react-icons/fa'
 import Contact from '../components/Contact'
 import ListingMap from '../components/ListingMap'
+import { useCompare } from '../context/CompareContext'
+import ListingItem from '../components/ListingItem'
+import { recordInteraction } from '../redux/preferences/preferencesSlice'
 
 // https://sabe.io/blog/javascript-format-numbers-commas#:~:text=The%20best%20way%20to%20format,format%20the%20number%20with%20commas.
 
@@ -28,8 +31,13 @@ export default function Listing() {
   const [contact, setContact] = useState(false)
   const params = useParams()
   const { currentUser } = useSelector((state) => state.user)
+  const dispatch = useDispatch()
   const [insight, setInsight] = useState(null)
   const [insightLoading, setInsightLoading] = useState(false)
+  const { toggleCompare, compareListings } = useCompare()
+  const isComparing = compareListings.some((l) => l._id === listing?._id)
+  const [recommendations, setRecommendations] = useState([])
+  const [recLoading, setRecLoading] = useState(false)
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -43,6 +51,7 @@ export default function Listing() {
           return
         }
         setListing(data)
+        dispatch(recordInteraction({ listing: data, weight: 1 }))
         setLoading(false)
         setError(false)
       } catch (error) {
@@ -81,6 +90,23 @@ export default function Listing() {
       }
     }
     fetchInsight()
+  }, [listing])
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!listing) return
+      try {
+        setRecLoading(true)
+        const res = await fetch(`/api/listing/recommendations/${listing._id}`)
+        const data = await res.json()
+        setRecommendations(data)
+      } catch (err) {
+        console.warn('Failed to fetch recommendations', err)
+      } finally {
+        setRecLoading(false)
+      }
+    }
+    fetchRecommendations()
   }, [listing])
 
   return (
@@ -188,15 +214,52 @@ export default function Listing() {
             <div className="mt-6 rounded-lg overflow-hidden shadow">
               <ListingMap listing={listing} />
             </div>
-            {currentUser && listing.userRef !== currentUser._id && !contact && (
+            <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full">
+              {currentUser && listing.userRef !== currentUser._id && !contact && (
+                <button
+                  onClick={() => setContact(true)}
+                  className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3 flex-1 font-semibold transition-opacity"
+                >
+                  Contact landlord
+                </button>
+              )}
               <button
-                onClick={() => setContact(true)}
-                className="bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 p-3"
+                onClick={() => toggleCompare(listing)}
+                className={`rounded-lg uppercase p-3 flex-1 font-bold transition-all border ${
+                  isComparing
+                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700 hover:bg-indigo-200 dark:hover:bg-indigo-900/50'
+                    : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-gray-200 border-gray-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-zinc-700'
+                }`}
               >
-                Contact landlord
+                {isComparing ? '✓ Added to Compare' : '+ Compare Property'}
               </button>
-            )}
+            </div>
             {contact && <Contact listing={listing} />}
+
+            {/* ── Recommendations Section ── */}
+            {(recLoading || recommendations.length > 0) && (
+              <div className="mt-12 mb-4 border-t border-gray-200 dark:border-white/10 pt-8 animate-fade-in">
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-gray-100 mb-1">
+                  You May Also Like
+                </h2>
+                <p className="text-slate-500 dark:text-gray-400 mb-6 text-sm font-medium">
+                  Similar properties based on this listing
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {recLoading ? (
+                    [...Array(4)].map((_, i) => (
+                      <div key={i} className="w-full aspect-[4/3] sm:h-auto h-[300px] bg-slate-200 dark:bg-zinc-800/80 rounded-2xl animate-shimmer border border-transparent dark:border-white/5"></div>
+                    ))
+                  ) : (
+                    recommendations.map(rec => (
+                      <div key={rec._id} className="w-full">
+                        <ListingItem listing={rec} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
