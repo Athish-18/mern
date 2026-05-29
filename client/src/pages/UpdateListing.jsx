@@ -180,13 +180,13 @@ export default function CreateListing() {
           <input
             type="text"
             placeholder="Address"
-            className="border p-3 rounded-lg"
+            className="border p-3 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
             id="address"
             required
             onChange={handleChange}
             value={formData.address}
           />
-          <div className="flex gap-6 flex-wrap">
+          <div className="flex gap-4 sm:gap-6 flex-wrap">
             <div className="flex gap-2">
               <input
                 type="checkbox"
@@ -238,7 +238,7 @@ export default function CreateListing() {
               <span>Offer</span>
             </div>
           </div>
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-wrap gap-4 sm:gap-6">
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -291,7 +291,7 @@ export default function CreateListing() {
                   min="0"
                   max="10000000"
                   required
-                  className="p-3 border border-gray-300 rounded-lg"
+                  className="p-3 border border-gray-300 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
                   onChange={handleChange}
                   value={formData.discountPrice}
                 />
@@ -312,7 +312,7 @@ export default function CreateListing() {
               The first image will be the cover (max 6)
             </span>
           </p>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <input
               onChange={(e) => setFiles(e.target.files)}
               className="p-3 border border-gray-300 rounded w-full dark:border-zinc-600 dark:text-gray-300"

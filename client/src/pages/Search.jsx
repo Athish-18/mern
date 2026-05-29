@@ -21,6 +21,7 @@ export default function Search() {
   const [listings, setListings] = useState([])
   const [showMore, setShowMore] = useState(false)
   const [activeId, setActiveId] = useState(null)
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false)
   const cardRefs = useRef({})
 
   // ── AI Chat Assistant ────────────────────────────────────────────────────────────
@@ -139,6 +140,7 @@ export default function Search() {
     urlParams.set('order', sidebardata.order)
     const searchQuery = urlParams.toString()
     navigate(`/search?${searchQuery}`)
+    setIsMobileFiltersOpen(false) // Close drawer on submit
   }
 
   const onShowMoreClick = async () => {
@@ -195,7 +197,7 @@ export default function Search() {
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col animate-fade-in">
       {/* ── AI Chat Assistant ──────────────────────────────────────────────────── */}
       <div className="w-full flex justify-center py-10 bg-slate-50 dark:bg-zinc-950/50 border-b border-gray-200 dark:border-white/5 transition-colors duration-300">
         <div className="w-full max-w-4xl px-4 flex flex-col gap-6">
@@ -241,18 +243,18 @@ export default function Search() {
             <div className="flex gap-3 w-full mt-2 relative">
                 <input
                     type="text"
-                    placeholder="Ask about properties... (e.g. 'Show me 2BHK in BTM Layout under 20k')"
+                    placeholder="Ask about properties... (e.g. 'Show me 2BHK in BTM...')"
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAiChatSubmit()}
-                    className="flex-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-white/10 rounded-full pl-6 pr-32 py-4 text-slate-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-sm transition-all"
+                    className="flex-1 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-white/10 rounded-full pl-6 pr-24 sm:pr-32 py-4 text-slate-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50 shadow-sm transition-all"
                 />
                 <button
                     onClick={handleAiChatSubmit}
                     disabled={aiLoading}
-                    className="absolute right-2 top-2 bottom-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full px-8 font-bold tracking-wide hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-70 flex items-center justify-center min-w-[100px]"
+                    className="absolute right-2 top-2 bottom-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full px-4 sm:px-8 font-bold tracking-wide hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-70 flex items-center justify-center min-w-[60px] sm:min-w-[100px]"
                 >
-                    {aiLoading ? '⏳' : 'SEND'}
+                    {aiLoading ? '⏳' : <><span className="hidden sm:inline">SEND</span><span className="sm:hidden text-lg font-normal">➤</span></>}
                 </button>
             </div>
             {aiError && (
@@ -263,12 +265,48 @@ export default function Search() {
         </div>
       </div>
 
+      {/* ── Mobile Filters Button ── */}
+      <div className="lg:hidden px-4 py-4 border-b border-gray-200 dark:border-white/5 flex justify-between items-center bg-slate-50 dark:bg-zinc-950">
+        <h2 className="font-extrabold tracking-tight text-xl text-slate-800 dark:text-gray-100">Property Results</h2>
+        <button 
+          onClick={() => setIsMobileFiltersOpen(true)}
+          className="bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 px-5 py-2 rounded-full font-bold text-sm tracking-wide border border-gray-200 dark:border-white/10 flex items-center gap-2 shadow-sm"
+        >
+          <span>Filters</span>
+        </button>
+      </div>
+
       {/* ── Sidebar + Results layout ──────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row max-w-[1500px] mx-auto w-full gap-8 p-4 sm:p-6 lg:p-8">
-        {/* Floating Sidebar */}
-        <div className="lg:w-[340px] shrink-0">
-          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-3xl shadow-xl dark:shadow-black/20 p-6 sm:p-8 lg:sticky lg:top-24">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-7">
+      <div className="flex flex-col lg:flex-row max-w-[1500px] mx-auto w-full gap-0 lg:gap-8 p-4 sm:p-6 lg:p-8">
+        
+        {/* Mobile Overlay */}
+        {isMobileFiltersOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+            onClick={() => setIsMobileFiltersOpen(false)}
+          ></div>
+        )}
+
+        {/* Sidebar Container (Drawer on Mobile, Sidebar on Desktop) */}
+        <div className={`
+          fixed inset-y-0 left-0 z-50 w-full sm:w-[400px] bg-white dark:bg-zinc-950 shadow-2xl transform transition-transform duration-300 ease-in-out
+          lg:relative lg:transform-none lg:w-[340px] lg:shrink-0 lg:bg-transparent lg:shadow-none lg:z-0
+          ${isMobileFiltersOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
+          <div className="h-full overflow-y-auto lg:overflow-visible">
+            {/* Mobile Header for Drawer */}
+            <div className="lg:hidden p-6 border-b border-gray-200 dark:border-white/5 flex justify-between items-center sticky top-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md z-10">
+              <h2 className="font-extrabold text-xl text-slate-800 dark:text-gray-100">Filters</h2>
+              <button 
+                onClick={() => setIsMobileFiltersOpen(false)}
+                className="w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-600 dark:text-gray-400 hover:bg-slate-200 dark:hover:bg-zinc-700 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-white/80 dark:bg-white/5 lg:backdrop-blur-xl lg:border border-gray-200 dark:border-white/10 lg:rounded-3xl lg:shadow-xl lg:dark:shadow-black/20 p-6 sm:p-8 lg:sticky lg:top-24">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-7 pb-20 lg:pb-0">
               <div className="flex flex-col gap-2">
                 <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">
                   Search Term
@@ -277,7 +315,7 @@ export default function Search() {
                   type="text"
                   id="searchTerm"
                   placeholder="Location, property name..."
-                  className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm"
+                  className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-[3px] focus:ring-emerald-500/20 focus:border-emerald-500/50 focus:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all shadow-sm placeholder:transition-opacity focus:placeholder:opacity-50"
                   value={sidebardata.searchTerm}
                   onChange={handleChange}
                 />
@@ -285,21 +323,21 @@ export default function Search() {
               <div className="flex flex-col gap-3">
                 <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">Property Type</label>
                 <div className="flex gap-4 flex-wrap">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="all" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.type === 'all'} />
-                    <span className="text-slate-600 dark:text-gray-300 font-medium">Any</span>
+                  <label className="flex items-center gap-2 cursor-pointer group/cb">
+                    <input type="checkbox" id="all" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer transition-transform group-hover/cb:scale-110 active:scale-90" onChange={handleChange} checked={sidebardata.type === 'all'} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium group-hover/cb:text-emerald-600 dark:group-hover/cb:text-emerald-400 transition-colors">Any</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="rent" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.type === 'rent'} />
-                    <span className="text-slate-600 dark:text-gray-300 font-medium">Rent</span>
+                  <label className="flex items-center gap-2 cursor-pointer group/cb">
+                    <input type="checkbox" id="rent" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer transition-transform group-hover/cb:scale-110 active:scale-90" onChange={handleChange} checked={sidebardata.type === 'rent'} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium group-hover/cb:text-emerald-600 dark:group-hover/cb:text-emerald-400 transition-colors">Rent</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="sale" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.type === 'sale'} />
-                    <span className="text-slate-600 dark:text-gray-300 font-medium">Sale</span>
+                  <label className="flex items-center gap-2 cursor-pointer group/cb">
+                    <input type="checkbox" id="sale" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer transition-transform group-hover/cb:scale-110 active:scale-90" onChange={handleChange} checked={sidebardata.type === 'sale'} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium group-hover/cb:text-emerald-600 dark:group-hover/cb:text-emerald-400 transition-colors">Sale</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="offer" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.offer} />
-                    <span className="text-slate-600 dark:text-gray-300 font-medium">Offer</span>
+                  <label className="flex items-center gap-2 cursor-pointer group/cb">
+                    <input type="checkbox" id="offer" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer transition-transform group-hover/cb:scale-110 active:scale-90" onChange={handleChange} checked={sidebardata.offer} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium group-hover/cb:text-emerald-600 dark:group-hover/cb:text-emerald-400 transition-colors">Offer</span>
                   </label>
                 </div>
               </div>
@@ -307,13 +345,13 @@ export default function Search() {
               <div className="flex flex-col gap-3">
                 <label className="font-bold text-slate-700 dark:text-gray-200 tracking-wide text-sm uppercase">Amenities</label>
                 <div className="flex gap-4 flex-wrap">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="parking" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.parking} />
-                    <span className="text-slate-600 dark:text-gray-300 font-medium">Parking</span>
+                  <label className="flex items-center gap-2 cursor-pointer group/cb">
+                    <input type="checkbox" id="parking" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer transition-transform group-hover/cb:scale-110 active:scale-90" onChange={handleChange} checked={sidebardata.parking} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium group-hover/cb:text-emerald-600 dark:group-hover/cb:text-emerald-400 transition-colors">Parking</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="furnished" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer" onChange={handleChange} checked={sidebardata.furnished} />
-                    <span className="text-slate-600 dark:text-gray-300 font-medium">Furnished</span>
+                  <label className="flex items-center gap-2 cursor-pointer group/cb">
+                    <input type="checkbox" id="furnished" className="w-5 h-5 accent-emerald-500 rounded cursor-pointer transition-transform group-hover/cb:scale-110 active:scale-90" onChange={handleChange} checked={sidebardata.furnished} />
+                    <span className="text-slate-600 dark:text-gray-300 font-medium group-hover/cb:text-emerald-600 dark:group-hover/cb:text-emerald-400 transition-colors">Furnished</span>
                   </label>
                 </div>
               </div>
@@ -324,13 +362,13 @@ export default function Search() {
                 <div className="flex items-center gap-3">
                   <input
                     type="number" id="minPrice" placeholder="Min" min="0"
-                    className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm"
+                    className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-[3px] focus:ring-emerald-500/20 focus:border-emerald-500/50 focus:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all shadow-sm placeholder:transition-opacity focus:placeholder:opacity-50"
                     value={sidebardata.minPrice} onChange={handleChange}
                   />
                   <span className="text-gray-400 font-medium">–</span>
                   <input
                     type="number" id="maxPrice" placeholder="Max" min="0"
-                    className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all shadow-sm"
+                    className="border border-gray-300 dark:border-white/10 rounded-xl p-3 w-full bg-white dark:bg-zinc-900/50 dark:text-gray-100 focus:outline-none focus:ring-[3px] focus:ring-emerald-500/20 focus:border-emerald-500/50 focus:shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all shadow-sm placeholder:transition-opacity focus:placeholder:opacity-50"
                     value={sidebardata.maxPrice} onChange={handleChange}
                   />
                 </div>
@@ -351,28 +389,31 @@ export default function Search() {
                 </select>
               </div>
 
-              <button className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-4 rounded-xl font-bold uppercase tracking-widest hover:shadow-lg hover:shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-2">
+              <button className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-4 rounded-xl font-bold uppercase tracking-widest hover:shadow-[0_8px_30px_rgba(16,185,129,0.3)] dark:hover:shadow-[0_8px_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 mt-2">
                 Search Properties
               </button>
             </form>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 flex flex-col gap-6">
-          <h1 className="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-gray-100 px-2 mt-2">
+        <div className="flex-1 min-w-0 flex flex-col gap-6 lg:mt-0">
+          <h1 className="hidden lg:block text-2xl font-extrabold tracking-tight text-slate-800 dark:text-gray-100 px-2 mt-2">
             Property Results
           </h1>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col xl:flex-row gap-8">
             {/* LEFT — listing cards (scrollable) */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 overflow-y-auto max-h-screen pr-2 pb-10 content-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1 xl:overflow-y-auto xl:max-h-[calc(100vh-120px)] pr-2 pb-10 content-start">
               {!loading && listings.length === 0 && (
-                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-300 dark:border-white/10 text-center">No properties found matching your criteria.</p>
+                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 p-8 bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-300 dark:border-white/10 text-center font-medium">No properties found matching your criteria.</p>
               )}
               {loading && (
-                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 text-center p-4">
-                  Loading properties...
-                </p>
+                <>
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="w-full aspect-[4/3] sm:h-auto h-[350px] bg-slate-200 dark:bg-zinc-800/80 rounded-2xl animate-shimmer border border-transparent dark:border-white/5"></div>
+                  ))}
+                </>
               )}
               {!loading &&
                 listings &&
@@ -406,8 +447,7 @@ export default function Search() {
             {/* RIGHT — sticky map */}
             {!loading && listings.length > 0 && (
               <div
-                className="lg:w-[480px] xl:w-[540px] lg:sticky lg:top-24 lg:self-start drop-shadow-xl"
-                style={{ height: 'calc(100vh - 120px)', minHeight: '480px' }}
+                className="w-full xl:w-[480px] 2xl:w-[540px] xl:sticky xl:top-24 xl:self-start drop-shadow-xl z-10 xl:h-[calc(100vh-120px)] h-[500px]"
               >
                 <SearchMap
                   listings={listings}

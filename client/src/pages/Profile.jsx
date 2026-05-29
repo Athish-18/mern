@@ -281,15 +281,15 @@ export default function Profile() {
                 <p>{listing.name}</p>
               </Link>
 
-              <div className="flex flex-col item-center">
+              <div className="flex sm:flex-col items-center gap-3 sm:gap-0 mt-2 sm:mt-0">
                 <button
                   onClick={() => handleListingDelete(listing._id)}
-                  className="text-red-700 uppercase"
+                  className="text-red-700 uppercase text-sm font-semibold hover:opacity-80"
                 >
                   Delete
                 </button>
                 <Link to={`/update-listing/${listing._id}`}>
-                  <button className="text-green-700 uppercase">Edit</button>
+                  <button className="text-green-700 uppercase text-sm font-semibold hover:opacity-80">Edit</button>
                 </Link>
               </div>
             </div>
@@ -312,13 +312,14 @@ export default function Profile() {
           <h1 className="text-center mt-4 text-2xl font-semibold dark:text-gray-200">
             Your Favorites
           </h1>
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
             {favorites.map((listing) => (
-              <ListingItem
-                key={listing._id}
-                listing={listing}
-                initialFavorited={true}
-              />
+              <div key={listing._id} className="w-full">
+                <ListingItem
+                  listing={listing}
+                  initialFavorited={true}
+                />
+              </div>
             ))}
           </div>
         </div>

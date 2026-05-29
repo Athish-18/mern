@@ -37,38 +37,38 @@ export default function ListingItem({ listing, initialFavorited = false }) {
   }
 
   return (
-    <div className="bg-white dark:bg-zinc-800/90 shadow-md hover:shadow-xl dark:shadow-black/20 dark:hover:shadow-black/40 transition-all duration-300 overflow-hidden rounded-2xl w-full sm:w-[330px] relative group border border-transparent dark:border-white/5 hover:-translate-y-1">
+    <div className="bg-white dark:bg-zinc-800/90 shadow-md hover:shadow-2xl dark:shadow-black/20 dark:hover:shadow-emerald-500/5 transition-all duration-300 overflow-hidden rounded-2xl w-full flex flex-col relative group border border-transparent dark:border-white/5 hover:-translate-y-1 animate-slide-up hover-glow h-full">
       {/* Heart button */}
       {currentUser && (
         <button
           onClick={handleFavorite}
           disabled={loading}
-          className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm dark:bg-zinc-900/80 rounded-full p-2 shadow-sm hover:scale-110 transition-transform border border-transparent dark:border-white/10"
+          className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm dark:bg-zinc-900/80 rounded-full p-2.5 shadow-sm hover:shadow-md hover:scale-110 active:scale-90 transition-all duration-300 border border-transparent dark:border-white/10"
           title={favorited ? 'Remove from favorites' : 'Save to favorites'}
         >
           {favorited ? (
-            <FaHeart className="text-red-500 text-lg" />
+            <FaHeart className="text-red-500 text-lg transition-colors duration-300 animate-fade-in" />
           ) : (
-            <FaRegHeart className="text-gray-500 dark:text-gray-300 text-lg" />
+            <FaRegHeart className="text-gray-500 dark:text-gray-300 text-lg transition-colors duration-300 group-hover/btn:text-gray-700 dark:group-hover/btn:text-white" />
           )}
         </button>
       )}
 
-      <Link to={`/listing/${listing._id}`} className="block">
-        <div className="relative overflow-hidden">
+      <Link to={`/listing/${listing._id}`} className="flex flex-col h-full">
+        <div className="relative overflow-hidden aspect-[4/3] w-full bg-slate-100 dark:bg-zinc-900">
           <img
             src={
               listing.imageUrls[0] ||
               'https://53.fs1.hubspotusercontent-na1.net/hub/53/hubfs/Sales_Blog/real-estate-business-compressor.jpg?width=595&height=400&name=real-estate-business-compressor.jpg'
             }
             alt="listing cover"
-            className="h-[320px] sm:h-[220px] w-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
         
-        <div className="p-5 flex flex-col gap-3 w-full">
-          <p className="truncate text-lg font-bold text-slate-800 dark:text-gray-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+        <div className="p-4 sm:p-5 flex flex-col flex-1 w-full gap-3">
+          <p className="truncate text-base sm:text-lg font-bold text-slate-800 dark:text-gray-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors tracking-tight">
             {listing.name}
           </p>
           <div className="flex items-center gap-1.5 mt-[-4px]">
@@ -77,17 +77,16 @@ export default function ListingItem({ listing, initialFavorited = false }) {
               {listing.address}
             </p>
           </div>
-          <p className="text-sm text-slate-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-slate-600 dark:text-gray-400 line-clamp-2 leading-relaxed flex-1">
             {listing.description}
           </p>
-          <p className="text-slate-700 dark:text-emerald-400 mt-1 text-lg font-bold">
-            ₹
-            {listing.offer
+          <p className="text-slate-700 dark:text-emerald-400 mt-2 text-base sm:text-lg font-bold">
+            ₹{listing.offer
               ? listing.discountPrice.toLocaleString('en-IN')
               : listing.regularPrice.toLocaleString('en-IN')}
             {listing.type === 'rent' && <span className="text-sm font-medium text-slate-500 dark:text-gray-400"> / month</span>}
           </p>
-          <div className="text-slate-600 dark:text-gray-300 flex gap-4 pt-2 border-t border-slate-100 dark:border-white/5">
+          <div className="text-slate-600 dark:text-gray-300 flex items-center gap-4 pt-4 mt-auto border-t border-slate-100 dark:border-white/5">
             <div className="font-semibold text-xs tracking-wide">
               {listing.bedrooms > 1
                 ? `${listing.bedrooms} BEDS `

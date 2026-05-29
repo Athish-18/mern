@@ -36,7 +36,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-black/35 border-b border-gray-200 dark:border-white/5 shadow-sm transition-all duration-300">
-      <div className="flex justify-between items-center max-w-6xl mx-auto px-4 sm:px-6 h-16">
+      <div className="flex justify-between items-center max-w-[1500px] mx-auto px-4 sm:px-6 h-16">
         
         {/* Logo */}
         <Link to="/" className="flex-shrink-0 flex items-center gap-1 group">
@@ -50,12 +50,12 @@ export default function Header() {
         <div className="hidden sm:flex items-center gap-8 flex-1 justify-center">
           <form
             onSubmit={handleSubmit}
-            className="bg-gray-100/80 dark:bg-zinc-900/80 border border-transparent focus-within:border-emerald-500/50 focus-within:ring-4 focus-within:ring-emerald-500/10 px-4 py-2 rounded-full flex items-center transition-all duration-300 w-full max-w-[420px] group"
+            className="bg-gray-100/80 dark:bg-zinc-900/80 border border-transparent focus-within:border-emerald-500/50 focus-within:ring-[3px] focus-within:ring-emerald-500/20 focus-within:shadow-[0_0_15px_rgba(16,185,129,0.15)] px-4 py-2 rounded-full flex items-center transition-all duration-300 w-full lg:max-w-[420px] max-w-[280px] md:max-w-[320px] group"
           >
             <input
               type="text"
               placeholder="Search properties..."
-              className="bg-transparent focus:outline-none w-full text-slate-800 dark:text-gray-100 placeholder-slate-500 dark:placeholder-gray-400"
+              className="bg-transparent focus:outline-none w-full text-slate-800 dark:text-gray-100 placeholder-slate-500 dark:placeholder-gray-400 placeholder:transition-opacity focus:placeholder:opacity-50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -65,11 +65,11 @@ export default function Header() {
           </form>
 
           <nav className="flex items-center gap-6">
-            <Link to="/">
-              <span className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</span>
+            <Link to="/" className="group/link relative">
+              <span className="text-sm font-medium text-slate-600 dark:text-gray-300 group-hover/link:text-emerald-600 dark:group-hover/link:text-emerald-400 transition-colors after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-emerald-500 after:scale-x-0 group-hover/link:after:scale-x-100 after:transition-transform after:origin-left">Home</span>
             </Link>
-            <Link to="/about">
-              <span className="text-sm font-medium text-slate-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">About</span>
+            <Link to="/about" className="group/link relative">
+              <span className="text-sm font-medium text-slate-600 dark:text-gray-300 group-hover/link:text-emerald-600 dark:group-hover/link:text-emerald-400 transition-colors after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-emerald-500 after:scale-x-0 group-hover/link:after:scale-x-100 after:transition-transform after:origin-left">About</span>
             </Link>
           </nav>
         </div>
@@ -77,17 +77,17 @@ export default function Header() {
         {/* Right Section: Theme Toggle & Profile */}
         <div className="flex items-center gap-3 sm:gap-5">
           <button
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800/80 text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-zinc-700 hover:scale-105 active:scale-95 transition-all duration-200"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800/80 text-slate-600 dark:text-gray-300 hover:bg-white dark:hover:bg-zinc-700 hover:shadow-md dark:hover:shadow-emerald-500/10 hover:scale-110 active:scale-95 transition-all duration-300"
             onClick={() => dispatch(toggleTheme())}
             aria-label="Toggle Dark Mode"
           >
-            {theme === 'light' ? <FaMoon size={16} /> : <FaSun size={18} className="text-yellow-400" />}
+            {theme === 'light' ? <FaMoon size={16} /> : <FaSun size={18} className="text-yellow-400 drop-shadow-sm" />}
           </button>
 
           <div className="hidden sm:block">
-            <Link to="/profile">
+            <Link to="/profile" className="block transform transition-transform hover:-translate-y-0.5 active:scale-95">
               {currentUser ? (
-                <div className="p-1 rounded-full border-2 border-transparent hover:border-emerald-500 transition-all duration-300">
+                <div className="p-0.5 rounded-full border-2 border-transparent hover:border-emerald-500 transition-colors duration-300 shadow-sm hover:shadow-md">
                   <img
                     className="rounded-full h-8 w-8 object-cover"
                     src={currentUser.avatar}
@@ -95,7 +95,7 @@ export default function Header() {
                   />
                 </div>
               ) : (
-                <span className="text-sm font-medium bg-slate-900 dark:bg-emerald-500 text-white px-5 py-2.5 rounded-full hover:bg-slate-800 dark:hover:bg-emerald-600 transition-colors shadow-sm">
+                <span className="inline-block text-sm font-medium bg-slate-900 dark:bg-emerald-500 text-white px-5 py-2.5 rounded-full hover:bg-slate-800 dark:hover:bg-emerald-400 transition-all duration-300 shadow-sm hover:shadow-lg dark:hover:shadow-emerald-500/20">
                   Sign in
                 </span>
               )}
@@ -135,14 +135,14 @@ export default function Header() {
             </button>
           </form>
           
-          <div className="flex flex-col gap-1 mt-2">
-            <Link to="/" className="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors">
+          <div className="flex flex-col gap-2 mt-2">
+            <Link to="/" className="p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors">
               Home
             </Link>
-            <Link to="/about" className="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors">
+            <Link to="/about" className="p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors">
               About
             </Link>
-            <Link to="/profile" className="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors flex items-center gap-3">
+            <Link to="/profile" className="p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors flex items-center gap-3">
               {currentUser ? (
                 <>
                   <img src={currentUser.avatar} alt="profile" className="w-6 h-6 rounded-full" />

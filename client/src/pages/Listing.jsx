@@ -95,7 +95,7 @@ export default function Listing() {
             {listing.imageUrls.map((url) => (
               <SwiperSlide key={url}>
                 <div
-                  className="h-[550px]"
+                  className="h-[300px] sm:h-[400px] lg:h-[550px]"
                   style={{
                     background: `url(${url}) center no-repeat`,
                     backgroundSize: 'cover',
@@ -121,7 +121,7 @@ export default function Listing() {
               Link copied!
             </p>
           )}
-          <div className="flex flex-col max-w-4xl mx-auto p-3 my-7 gap-4">
+          <div className="flex flex-col max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 my-4 lg:my-7 gap-5">
             <p className="text-2xl font-semibold dark:text-gray-200">
               {listing.name} - ₹{' '}
               {listing.offer
@@ -145,9 +145,9 @@ export default function Listing() {
             </div>
             
             {/* ── AI Insight Box ── */}
-            <div className="bg-indigo-50 dark:bg-zinc-800 border border-indigo-200 dark:border-zinc-700 rounded-lg p-4 mt-2 mb-2 shadow-sm flex gap-3 items-start relative overflow-hidden">
+            <div className="bg-indigo-50 dark:bg-zinc-800 border border-indigo-200 dark:border-zinc-700 rounded-lg p-4 mt-2 mb-2 shadow-sm flex gap-2 sm:gap-3 items-start relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
-                <div className="text-xl mt-0.5">✨</div>
+                <div className="text-xl mt-0.5 shrink-0">✨</div>
                 <div>
                    <p className="font-bold text-indigo-900 dark:text-indigo-300 mb-1 flex items-center gap-2">
                        AI Property Insight 

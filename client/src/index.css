@@ -2,4 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Premium custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
 
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(to right, rgba(255,255,255,0) 4%, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0) 36%);
+    background-size: 1000px 100%;
+  }
+  .dark .animate-shimmer {
+    background: linear-gradient(to right, rgba(255,255,255,0) 4%, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0) 36%);
+    background-size: 1000px 100%;
+  }
+  .hover-glow {
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
