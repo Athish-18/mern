@@ -1,3 +1,5 @@
+import Listing from '../models/listing.model.js'
+
 export const aiSearch = async (req, res) => {
   try {
     const { messages } = req.body
@@ -337,5 +339,301 @@ Keep strengths and reasons concise (max 1 sentence each). Base your comparison o
   } catch (err) {
     console.error('[AI Compare] Unexpected error:', err)
     res.status(500).json({ message: 'AI comparison failed', error: err.message })
+  }
+}
+
+export const aiAdvisor = async (req, res) => {
+  try {
+    const { query } = req.body
+
+    if (!query) {
+      return res.status(400).json({ message: 'A query describing your situation is required' })
+    }
+
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ message: 'GROQ_API_KEY is not configured on the server.' })
+    }
+
+    // Fetch available locations to ground the AI
+    const rawAddresses = await Listing.distinct('address')
+    // Extract unique main areas (usually the last part of a comma separated address, or the whole address if no commas)
+    const availableLocations = [...new Set(rawAddresses.map(a => {
+       const parts = a.split(',')
+       return parts[parts.length - 1].trim()
+    }))].filter(Boolean).join(', ')
+
+    const systemPrompt = {
+      role: 'system',
+      content: `You are an expert real-estate advisor. Based on the user's situation, recommend a suitable locality and property types.
+      
+IMPORTANT: Try to recommend one of these available database locations if applicable: ${availableLocations}
+DO NOT invent hyper-specific sub-localities (e.g., avoid 'Katha, Sarjapur Road', just use 'Sarjapur').
+
+Your ONLY allowed output is a raw JSON object (no markdown, no quotes around it, just JSON).
+
+JSON Schema:
+{
+  "recommendedArea": "The specific neighborhood/area (e.g., 'Sarjapur')",
+  "reasoning": [
+    "Reason 1",
+    "Reason 2"
+  ],
+  "suggestedPropertyTypes": ["2BHK Apartments", "Furnished Homes"],
+  "filters": {
+    "searchTerm": "The exact name of the broad locality to search in DB (e.g., 'Sarjapur', 'Whitefield').",
+    "type": "rent" | "sale" | "all",
+    "minPrice": number or null,
+    "maxPrice": number or null,
+    "bedrooms": number or null,
+    "furnished": boolean or null
+  }
+}
+
+Keep reasoning concise. CRITICAL: If the user mentions 'sale', 'buy', or 'investment', ensure type is 'sale' or 'all'.`
+    }
+
+    const userMessage = {
+      role: 'user',
+      content: query
+    }
+
+    let parsed
+    try {
+      const groqRes = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          response_format: { type: 'json_object' },
+          messages: [systemPrompt, userMessage],
+        }),
+      })
+
+      const groqData = await groqRes.json()
+      
+      if (!groqRes.ok) {
+        throw new Error(groqData?.error?.message || 'Groq API Error')
+      }
+
+      const rawText = groqData.choices?.[0]?.message?.content ?? '{}'
+      parsed = JSON.parse(rawText)
+      
+    } catch (apiError) {
+      console.warn('[AI Advisor] Groq failed. Using generic fallback!', apiError.message)
+      parsed = {
+        recommendedArea: "Bengaluru",
+        reasoning: ["Great IT hub", "Multiple options in budget"],
+        suggestedPropertyTypes: ["Apartments"],
+        filters: {
+          searchTerm: "",
+          type: "all"
+        }
+      }
+    }
+
+    // Now query MongoDB using the filters extracted by the AI
+    let dbQuery = {}
+    const filters = parsed.filters || {}
+
+    if (filters.searchTerm) {
+      dbQuery.address = { $regex: filters.searchTerm, $options: 'i' }
+    }
+    if (filters.type && filters.type !== 'all') {
+      dbQuery.type = filters.type
+    }
+    if (filters.minPrice || filters.maxPrice) {
+      dbQuery.regularPrice = {}
+      if (filters.minPrice) dbQuery.regularPrice.$gte = filters.minPrice
+      if (filters.maxPrice) dbQuery.regularPrice.$lte = filters.maxPrice
+    }
+    if (filters.bedrooms) {
+      dbQuery.bedrooms = filters.bedrooms
+    }
+    if (filters.furnished !== null && filters.furnished !== undefined) {
+      dbQuery.furnished = filters.furnished
+    }
+
+    let listings = await Listing.find(dbQuery).limit(4)
+
+    // Helper to incrementally fill the listings array up to 4
+    const fillListings = async (queryToRelax, limit) => {
+      if (listings.length >= limit) return
+      const ids = listings.map(l => l._id)
+      const relaxedQuery = { ...queryToRelax, _id: { $nin: ids } }
+      const more = await Listing.find(relaxedQuery).limit(limit - listings.length)
+      listings = [...listings, ...more]
+    }
+
+    // Fallback 1: Broaden location search to just the first word
+    if (filters.searchTerm) {
+      const firstWord = filters.searchTerm.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+      if (firstWord.length > 2) {
+        dbQuery.address = { $regex: firstWord, $options: 'i' }
+        await fillListings(dbQuery, 4)
+      }
+    }
+
+    // Fallback 2: Drop price constraints
+    if (filters.minPrice || filters.maxPrice) {
+      delete dbQuery.regularPrice
+      await fillListings(dbQuery, 4)
+    }
+    
+    // Fallback 3: Drop bedrooms and furnished constraints
+    delete dbQuery.bedrooms
+    delete dbQuery.furnished
+    await fillListings(dbQuery, 4)
+
+    // Fallback 4: Drop property type (rent vs sale)
+    delete dbQuery.type
+    await fillListings(dbQuery, 4)
+
+    return res.status(200).json({
+      recommendedArea: parsed.recommendedArea,
+      reasoning: parsed.reasoning,
+      suggestedPropertyTypes: parsed.suggestedPropertyTypes,
+      listings
+    })
+
+  } catch (err) {
+    console.error('[AI Advisor] Unexpected error:', err)
+    res.status(500).json({ message: 'AI advisor failed', error: err.message })
+  }
+}
+
+export const aiMarketSnapshot = async (req, res) => {
+  try {
+    const { listing } = req.body;
+    if (!listing) return res.status(400).json({ message: 'Listing data is required' });
+
+    // 1. Calculate Backend Metrics
+    // Extract main locality from address
+    const addressParts = listing.address.split(',');
+    const locality = addressParts[addressParts.length - 1].trim();
+
+    // Find similar properties in the database (same locality, type, and +/- 1 bedroom)
+    const similarListings = await Listing.find({
+      address: { $regex: locality, $options: 'i' },
+      type: listing.type,
+      bedrooms: { $gte: Math.max(1, listing.bedrooms - 1), $lte: listing.bedrooms + 1 },
+      _id: { $ne: listing._id }
+    }).limit(50);
+
+    const listingPrice = listing.offer ? listing.discountPrice : listing.regularPrice;
+
+    let localityAveragePrice = null;
+    let pricePositionText = "N/A";
+    let pricePositionPercentage = 0;
+    
+    if (similarListings.length > 0) {
+      const sum = similarListings.reduce((acc, curr) => acc + (curr.offer ? curr.discountPrice : curr.regularPrice), 0);
+      localityAveragePrice = Math.round(sum / similarListings.length);
+      
+      const diff = listingPrice - localityAveragePrice;
+      pricePositionPercentage = Math.round((Math.abs(diff) / localityAveragePrice) * 100);
+      
+      if (diff > 0) {
+        pricePositionText = `${pricePositionPercentage}% Above Average`;
+      } else if (diff < 0) {
+        pricePositionText = `${pricePositionPercentage}% Below Average`;
+      } else {
+        pricePositionText = "Exactly at Market Average";
+      }
+    } else {
+       // Not enough DB data, provide generic placeholder based on listing price
+       localityAveragePrice = listingPrice;
+       pricePositionText = "Insufficient comparable data";
+    }
+
+    // 2. Query Groq for AI Assessment
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({ message: 'GROQ_API_KEY is not configured.' });
+    }
+
+    const systemPrompt = {
+      role: 'system',
+      content: `You are an expert real-estate market analyst. Analyze the provided property metrics and generate a concise market snapshot.
+      
+Your ONLY allowed output is a raw JSON object.
+
+JSON Schema:
+{
+  "demandLevel": "High" | "Medium" | "Low",
+  "rentalAppeal": "Strong" | "Moderate" | "Weak",
+  "investmentPotential": "Excellent" | "Good" | "Fair" | "Poor",
+  "recommendation": "One concise sentence summarizing the overall assessment of this property.",
+  "summaryBullets": [
+    "A concise point about the price positioning.",
+    "A concise point about the demand/location.",
+    "A concise point about rental/investment appeal.",
+    "A concise point about the property type."
+  ]
+}
+
+Keep bullet points very short and punchy.`
+    };
+
+    const userMessage = {
+      role: 'user',
+      content: JSON.stringify({
+        propertyType: `${listing.bedrooms}BHK ${listing.furnished ? 'Furnished' : 'Unfurnished'} for ${listing.type}`,
+        location: locality,
+        listingPrice: listingPrice,
+        localityAveragePrice: localityAveragePrice,
+        pricePosition: pricePositionText,
+        hasParking: listing.parking,
+        isDiscounted: listing.offer
+      })
+    };
+
+    let aiData;
+    try {
+      const groqRes = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          response_format: { type: 'json_object' },
+          messages: [systemPrompt, userMessage],
+        }),
+      });
+
+      const rawData = await groqRes.json();
+      if (!groqRes.ok) throw new Error(rawData?.error?.message || 'Groq API Error');
+      
+      aiData = JSON.parse(rawData.choices[0].message.content);
+    } catch (apiError) {
+      console.warn('[AI Market Snapshot] Groq failed. Using fallback!', apiError.message);
+      aiData = {
+        demandLevel: "Medium",
+        rentalAppeal: "Moderate",
+        investmentPotential: "Good",
+        recommendation: "A solid property that aligns with general market trends.",
+        summaryBullets: [
+          `Priced at ₹${listingPrice.toLocaleString('en-IN')}.`,
+          "Located in an established area.",
+          "Standard rental appeal for this configuration.",
+          "Good overall investment potential."
+        ]
+      };
+    }
+
+    // 3. Return Combined Payload
+    return res.status(200).json({
+      localityAveragePrice,
+      listingPrice,
+      pricePosition: pricePositionText,
+      ...aiData
+    });
+
+  } catch (err) {
+    console.error('[AI Market Snapshot] Unexpected error:', err);
+    res.status(500).json({ message: 'AI Market Snapshot failed', error: err.message });
   }
 }

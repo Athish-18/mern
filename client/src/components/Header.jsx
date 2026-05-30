@@ -71,6 +71,9 @@ export default function Header() {
             <Link to="/about" className="group/link relative">
               <span className="text-sm font-medium text-slate-600 dark:text-gray-300 group-hover/link:text-emerald-600 dark:group-hover/link:text-emerald-400 transition-colors after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-emerald-500 after:scale-x-0 group-hover/link:after:scale-x-100 after:transition-transform after:origin-left">About</span>
             </Link>
+            <Link to="/advisor" className="group/link relative">
+              <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 group-hover/link:text-indigo-700 dark:group-hover/link:text-indigo-300 transition-colors after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-indigo-500 after:scale-x-0 group-hover/link:after:scale-x-100 after:transition-transform after:origin-left flex items-center gap-1">AI Advisor ✨</span>
+            </Link>
           </nav>
         </div>
 
@@ -141,6 +144,9 @@ export default function Header() {
             </Link>
             <Link to="/about" className="p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors">
               About
+            </Link>
+            <Link to="/advisor" className="p-4 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-medium transition-colors flex items-center gap-2">
+              AI Advisor ✨
             </Link>
             <Link to="/profile" className="p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-gray-200 font-medium transition-colors flex items-center gap-3">
               {currentUser ? (

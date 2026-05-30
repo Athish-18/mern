@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fa'
 import Contact from '../components/Contact'
 import ListingMap from '../components/ListingMap'
+import MarketSnapshot from '../components/MarketSnapshot'
 import { useCompare } from '../context/CompareContext'
 import ListingItem from '../components/ListingItem'
 import { recordInteraction } from '../redux/preferences/preferencesSlice'
@@ -184,6 +185,9 @@ export default function Listing() {
                    </p>
                 </div>
             </div>
+
+            {/* ── AI Market Snapshot ── */}
+            <MarketSnapshot listing={listing} />
 
             <p className="text-slate-800 dark:text-gray-300">
               <span className="font-semibold text-black dark:text-gray-200">Description - </span>
