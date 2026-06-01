@@ -101,18 +101,65 @@ export default function Advisor() {
                  <>Get Recommendations <FaMagic /></>
               )}
             </button>
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
           </form>
+          {error && (
+            <div className="mt-6 p-6 bg-red-50 dark:bg-red-900/10 rounded-2xl border border-dashed border-red-300 dark:border-red-500/20 text-center animate-fade-in">
+              <p className="text-lg text-red-600 dark:text-red-400 font-semibold flex items-center justify-center gap-2">
+                <span className="text-2xl">⚠️</span> AI Advisor Error
+              </p>
+              <p className="text-sm text-red-500/80 dark:text-red-300/80 mt-2">{error}</p>
+            </div>
+          )}
         </div>
 
-        {/* Loading State */}
+        {/* Loading State (Skeletons) */}
         {loading && (
-           <div className="flex flex-col items-center justify-center py-12 gap-6 animate-fade-in">
-              <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-              <p className="text-xl font-semibold text-slate-600 dark:text-gray-300 animate-pulse">
-                Analyzing your requirements and matching localities...
-              </p>
-           </div>
+          <div className="space-y-12 animate-pulse mt-12">
+            <div className="flex justify-center mb-2">
+               <p className="text-lg font-semibold text-indigo-500 dark:text-indigo-400">Analyzing your requirements & matching localities...</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               {/* Recommended Area Skeleton */}
+               <div className="bg-slate-200 dark:bg-zinc-800/80 rounded-3xl p-8 shadow-sm h-64 border border-transparent dark:border-white/5 flex flex-col justify-center">
+                 <div className="h-4 w-1/3 bg-slate-300 dark:bg-zinc-700 rounded mb-4"></div>
+                 <div className="h-10 w-2/3 bg-slate-300 dark:bg-zinc-700 rounded mb-8"></div>
+                 <div className="flex gap-2">
+                   <div className="h-8 w-24 bg-slate-300 dark:bg-zinc-700 rounded-full"></div>
+                   <div className="h-8 w-32 bg-slate-300 dark:bg-zinc-700 rounded-full"></div>
+                 </div>
+               </div>
+               
+               {/* Reasoning Skeleton */}
+               <div className="bg-white dark:bg-zinc-900/50 border border-gray-100 dark:border-white/5 rounded-3xl p-8 shadow-sm h-64">
+                 <div className="h-8 w-1/3 bg-slate-200 dark:bg-zinc-800 rounded mb-8"></div>
+                 <div className="space-y-6">
+                   <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-zinc-800 shrink-0"></div><div className="h-5 w-full bg-slate-200 dark:bg-zinc-800 rounded"></div></div>
+                   <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-zinc-800 shrink-0"></div><div className="h-5 w-5/6 bg-slate-200 dark:bg-zinc-800 rounded"></div></div>
+                   <div className="flex gap-3"><div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-zinc-800 shrink-0"></div><div className="h-5 w-4/5 bg-slate-200 dark:bg-zinc-800 rounded"></div></div>
+                 </div>
+               </div>
+            </div>
+            
+            {/* Properties Skeleton */}
+            <div>
+               <div className="h-8 w-1/4 bg-slate-200 dark:bg-zinc-800 rounded mb-6"></div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                 {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-white dark:bg-zinc-900/50 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-white/5 flex flex-col w-full h-[400px]">
+                      <div className="h-[220px] w-full bg-slate-200 dark:bg-zinc-800"></div>
+                      <div className="p-4 flex flex-col gap-3 mt-2">
+                        <div className="h-6 w-3/4 bg-slate-200 dark:bg-zinc-800 rounded"></div>
+                        <div className="h-4 w-1/2 bg-slate-200 dark:bg-zinc-800 rounded"></div>
+                        <div className="h-4 w-full bg-slate-200 dark:bg-zinc-800 rounded mt-2"></div>
+                        <div className="h-4 w-5/6 bg-slate-200 dark:bg-zinc-800 rounded"></div>
+                        <div className="h-6 w-1/3 bg-slate-200 dark:bg-zinc-800 rounded mt-2"></div>
+                      </div>
+                    </div>
+                 ))}
+               </div>
+            </div>
+          </div>
         )}
 
         {/* Results */}

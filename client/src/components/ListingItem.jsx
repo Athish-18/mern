@@ -72,6 +72,10 @@ export default function ListingItem({ listing, initialFavorited = false }) {
               listing.imageUrls[0] ||
               'https://53.fs1.hubspotusercontent-na1.net/hub/53/hubfs/Sales_Blog/real-estate-business-compressor.jpg?width=595&height=400&name=real-estate-business-compressor.jpg'
             }
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://placehold.co/600x400/png?text=Image+Not+Available';
+            }}
             alt="listing cover"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />

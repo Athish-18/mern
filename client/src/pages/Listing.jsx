@@ -112,22 +112,59 @@ export default function Listing() {
 
   return (
     <main>
-      {loading && <p className="text-center my-7 text-2xl">Loading...</p>}
+      {loading && (
+        <div className="animate-pulse w-full">
+          {/* Main image skeleton */}
+          <div className="h-[300px] sm:h-[400px] lg:h-[550px] w-full bg-slate-200 dark:bg-zinc-800"></div>
+          
+          <div className="flex flex-col max-w-4xl mx-auto w-full gap-4 p-3 mt-6">
+            {/* Title & Price */}
+            <div className="h-10 w-3/4 bg-slate-200 dark:bg-zinc-800 rounded-md"></div>
+            <div className="h-8 w-1/4 bg-slate-200 dark:bg-zinc-800 rounded-md mt-2"></div>
+            
+            {/* Address */}
+            <div className="h-5 w-1/2 bg-slate-200 dark:bg-zinc-800 rounded mt-2"></div>
+            
+            {/* Amenities array */}
+            <div className="flex gap-4 mt-4">
+               <div className="h-6 w-24 bg-slate-200 dark:bg-zinc-800 rounded-lg"></div>
+               <div className="h-6 w-24 bg-slate-200 dark:bg-zinc-800 rounded-lg"></div>
+               <div className="h-6 w-24 bg-slate-200 dark:bg-zinc-800 rounded-lg"></div>
+            </div>
+            
+            {/* Description */}
+            <div className="mt-6 space-y-3">
+              <div className="h-4 w-full bg-slate-200 dark:bg-zinc-800 rounded"></div>
+              <div className="h-4 w-full bg-slate-200 dark:bg-zinc-800 rounded"></div>
+              <div className="h-4 w-5/6 bg-slate-200 dark:bg-zinc-800 rounded"></div>
+              <div className="h-4 w-4/5 bg-slate-200 dark:bg-zinc-800 rounded"></div>
+            </div>
+            
+            {/* Contact Section */}
+            <div className="mt-8 h-12 w-full bg-slate-300 dark:bg-zinc-700 rounded-lg"></div>
+          </div>
+        </div>
+      )}
       {error && (
-        <p className="text-center my-7 text-2xl">Something went wrong!</p>
+        <div className="max-w-4xl mx-auto p-8 mt-12 bg-red-50 dark:bg-red-900/10 rounded-3xl border border-dashed border-red-300 dark:border-red-500/20 text-center animate-fade-in">
+          <p className="text-2xl text-red-600 dark:text-red-400 font-medium">Failed to load property details.</p>
+          <p className="text-base text-red-500/80 dark:text-red-300/80 mt-2">The property may have been removed, or there is a network issue.</p>
+        </div>
       )}
       {listing && !loading && !error && (
         <div>
           <Swiper navigation>
             {listing.imageUrls.map((url) => (
               <SwiperSlide key={url}>
-                <div
-                  className="h-[300px] sm:h-[400px] lg:h-[550px]"
-                  style={{
-                    background: `url(${url}) center no-repeat`,
-                    backgroundSize: 'cover',
+                <img
+                  src={url}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'https://placehold.co/1200x600/png?text=Image+Not+Available';
                   }}
-                ></div>
+                  alt={listing.name}
+                  className="w-full h-[300px] sm:h-[400px] lg:h-[550px] object-cover"
+                />
               </SwiperSlide>
             ))}
           </Swiper>

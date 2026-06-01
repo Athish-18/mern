@@ -22,6 +22,7 @@ export default function Search() {
   })
 
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
   const [listings, setListings] = useState([])
   const [showMore, setShowMore] = useState(false)
   const [activeId, setActiveId] = useState(null)
@@ -82,16 +83,27 @@ export default function Search() {
     const fetchListings = async () => {
       setLoading(true)
       setShowMore(false)
+      setFetchError(false)
       const searchQuery = urlParams.toString()
-      const res = await fetch(`/api/listing/get?${searchQuery}`)
-      const data = await res.json()
-      if (data.length > 8) {
-        setShowMore(true)
-      } else {
-        setShowMore(false)
+      try {
+        const res = await fetch(`/api/listing/get?${searchQuery}`)
+        const data = await res.json()
+        if (!res.ok) {
+           setFetchError(true)
+           setLoading(false)
+           return
+        }
+        if (data.length > 8) {
+          setShowMore(true)
+        } else {
+          setShowMore(false)
+        }
+        setListings(data)
+      } catch (err) {
+        setFetchError(true)
+      } finally {
+        setLoading(false)
       }
-      setListings(data)
-      setLoading(false)
     }
 
     fetchListings()
@@ -523,17 +535,33 @@ export default function Search() {
           <div className="flex flex-col xl:flex-row gap-8">
             {/* LEFT — listing cards (scrollable) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1 xl:overflow-y-auto xl:max-h-[calc(100vh-120px)] pr-2 pb-10 content-start">
-              {!loading && listings.length === 0 && (
-                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 p-8 bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-300 dark:border-white/10 text-center font-medium">No properties found matching your criteria.</p>
+              {fetchError && (
+                <div className="col-span-full p-8 bg-red-50 dark:bg-red-900/10 rounded-3xl border border-dashed border-red-300 dark:border-red-500/20 text-center animate-fade-in">
+                  <p className="text-xl text-red-600 dark:text-red-400 font-medium">Failed to load properties.</p>
+                  <p className="text-sm text-red-500/80 dark:text-red-300/80 mt-2">Please check your network connection and try again.</p>
+                </div>
+              )}
+              {!loading && !fetchError && listings.length === 0 && (
+                <p className="col-span-full text-xl text-slate-500 dark:text-gray-400 p-8 bg-slate-50 dark:bg-white/5 rounded-3xl border border-dashed border-slate-300 dark:border-white/10 text-center font-medium animate-fade-in">No properties found matching your criteria.</p>
               )}
               {loading && (
                 <>
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="w-full aspect-[4/3] sm:h-auto h-[350px] bg-slate-200 dark:bg-zinc-800/80 rounded-2xl animate-shimmer border border-transparent dark:border-white/5"></div>
+                    <div key={i} className="bg-white dark:bg-zinc-900/50 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-white/5 flex flex-col w-full h-[400px]">
+                      <div className="h-[220px] w-full bg-slate-200 dark:bg-zinc-800 animate-pulse"></div>
+                      <div className="p-4 flex flex-col gap-3 mt-2">
+                        <div className="h-6 w-3/4 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                        <div className="h-4 w-1/2 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                        <div className="h-4 w-full bg-slate-200 dark:bg-zinc-800 rounded animate-pulse mt-2"></div>
+                        <div className="h-4 w-5/6 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse"></div>
+                        <div className="h-6 w-1/3 bg-slate-200 dark:bg-zinc-800 rounded animate-pulse mt-2"></div>
+                      </div>
+                    </div>
                   ))}
                 </>
               )}
               {!loading &&
+                !fetchError &&
                 listings &&
                 listings.map((listing) => (
                   <div
@@ -552,7 +580,7 @@ export default function Search() {
                     <ListingItem listing={listing} />
                   </div>
                 ))}
-              {showMore && (
+              {showMore && !fetchError && (
                 <button
                   onClick={onShowMoreClick}
                   className="col-span-full mt-2 bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-zinc-700/80 p-4 font-bold text-center transition-all shadow-sm hover:shadow"
