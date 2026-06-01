@@ -34,6 +34,33 @@ export default function Advisor() {
     }
   };
 
+  // Fallback Messaging Logic
+  let headerText = "Recommended Properties";
+  let subText = null;
+
+  if (results && results.listings && results.recommendedArea) {
+    const recommendedLocality = results.recommendedArea.toLowerCase();
+    const exactLocalityCount = results.listings.filter(l => l.address.toLowerCase().includes(recommendedLocality)).length;
+    const totalCount = results.listings.length;
+    
+    if (totalCount > 0) {
+      if (exactLocalityCount >= Math.ceil(totalCount / 2)) {
+        headerText = `Properties in ${results.recommendedArea}`;
+        if (exactLocalityCount < totalCount) {
+          subText = `Some properties are shown from nearby areas because limited listings matched all constraints in ${results.recommendedArea}.`;
+        }
+      } else if (exactLocalityCount === 0) {
+        headerText = "Alternative Matches";
+        subText = `No properties in ${results.recommendedArea} matched your requirements. Showing the closest matches based on your budget and preferences.`;
+      } else {
+        headerText = "Best Matching Properties";
+        subText = `Some properties are shown from nearby areas because limited listings matched all constraints in ${results.recommendedArea}.`;
+      }
+    } else {
+      headerText = `Properties in ${results.recommendedArea}`;
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-12">
@@ -125,9 +152,16 @@ export default function Advisor() {
 
             {/* Recommended Listings */}
             <div>
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-gray-100 mb-6 flex items-center gap-2">
-                Properties in {results.recommendedArea}
-              </h3>
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-gray-100 flex items-center gap-2">
+                  {headerText}
+                </h3>
+                {subText && (
+                  <p className="text-sm text-slate-500 dark:text-gray-400 mt-2 border-l-4 border-indigo-400 pl-3">
+                    {subText}
+                  </p>
+                )}
+              </div>
               
               {results.listings?.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

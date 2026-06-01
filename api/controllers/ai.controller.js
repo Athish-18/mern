@@ -425,6 +425,22 @@ Keep reasoning concise. CRITICAL: If the user mentions 'sale', 'buy', or 'invest
       content: query
     }
 
+    // Determine preference-preservation sorting and keyword regex
+    const userQueryStr = query.toLowerCase();
+    let tierSort = null;
+    let tierKeywordRegex = null;
+
+    if (userQueryStr.includes('luxury') || userQueryStr.includes('premium') || userQueryStr.includes('villa') || userQueryStr.includes('high-end') || userQueryStr.includes('expensive')) {
+      tierSort = { regularPrice: -1 };
+      tierKeywordRegex = 'luxury|premium|villa|high-end|exclusive';
+    } else if (userQueryStr.includes('affordable') || userQueryStr.includes('budget') || userQueryStr.includes('cheap') || userQueryStr.includes('low cost') || userQueryStr.includes('lowest price')) {
+      tierSort = { regularPrice: 1 };
+      tierKeywordRegex = 'affordable|budget|cheap|deal|value';
+    } else if (userQueryStr.includes('new') || userQueryStr.includes('modern')) {
+      tierSort = { createdAt: -1 };
+      tierKeywordRegex = 'new|modern|recently|latest';
+    }
+
     let parsed
     try {
       const groqRes = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
@@ -465,6 +481,9 @@ Keep reasoning concise. CRITICAL: If the user mentions 'sale', 'buy', or 'invest
     // Now query MongoDB using the filters extracted by the AI
     let dbQuery = {}
     const filters = parsed.filters || {}
+    
+    console.log('\n[AI Advisor] AI Extracted Filters:', filters);
+    console.log('[AI Advisor] Recommended Locality:', parsed.recommendedArea);
 
     if (filters.searchTerm) {
       dbQuery.address = { $regex: filters.searchTerm, $options: 'i' }
@@ -484,46 +503,121 @@ Keep reasoning concise. CRITICAL: If the user mentions 'sale', 'buy', or 'invest
       dbQuery.furnished = filters.furnished
     }
 
-    let listings = await Listing.find(dbQuery).limit(4)
+    let listings = []
+    let isFallbackLocation = false
 
     // Helper to incrementally fill the listings array up to 4
-    const fillListings = async (queryToRelax, limit) => {
-      if (listings.length >= limit) return
+    const fillListings = async (queryToRun, limit) => {
+      if (listings.length >= limit) return false
+      
       const ids = listings.map(l => l._id)
-      const relaxedQuery = { ...queryToRelax, _id: { $nin: ids } }
-      const more = await Listing.find(relaxedQuery).limit(limit - listings.length)
-      listings = [...listings, ...more]
-    }
-
-    // Fallback 1: Broaden location search to just the first word
-    if (filters.searchTerm) {
-      const firstWord = filters.searchTerm.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
-      if (firstWord.length > 2) {
-        dbQuery.address = { $regex: firstWord, $options: 'i' }
-        await fillListings(dbQuery, 4)
+      const baseQuery = { ...queryToRun, _id: { $nin: ids } }
+      
+      let more = [];
+      
+      // Attempt to prefer keyword matches first
+      if (tierKeywordRegex) {
+        const keywordQuery = {
+          ...baseQuery,
+          $or: [
+            { name: { $regex: tierKeywordRegex, $options: 'i' } },
+            { description: { $regex: tierKeywordRegex, $options: 'i' } }
+          ]
+        };
+        console.log(`[AI Advisor] Running Keyword-Preferred Query:`, JSON.stringify(keywordQuery));
+        let builder = Listing.find(keywordQuery);
+        if (tierSort) builder = builder.sort(tierSort);
+        more = await builder.limit(limit - listings.length);
+        console.log(`[AI Advisor] Keyword Query returned ${more.length} properties.`);
       }
-    }
-
-    // Fallback 2: Drop price constraints
-    if (filters.minPrice || filters.maxPrice) {
-      delete dbQuery.regularPrice
-      await fillListings(dbQuery, 4)
+      
+      if (more.length < (limit - listings.length)) {
+        const existingMoreIds = more.map(l => l._id);
+        const remainderQuery = { ...baseQuery, _id: { $nin: [...ids, ...existingMoreIds] } };
+        
+        console.log(`[AI Advisor] Running Standard Query:`, JSON.stringify(remainderQuery));
+        let builder = Listing.find(remainderQuery);
+        if (tierSort) builder = builder.sort(tierSort);
+        const remainder = await builder.limit(limit - listings.length - more.length);
+        console.log(`[AI Advisor] Standard Query returned ${remainder.length} properties.`);
+        
+        more = [...more, ...remainder];
+      }
+      
+      listings = [...listings, ...more]
+      return true
     }
     
-    // Fallback 3: Drop bedrooms and furnished constraints
-    delete dbQuery.bedrooms
-    delete dbQuery.furnished
-    await fillListings(dbQuery, 4)
-
-    // Fallback 4: Drop property type (rent vs sale)
-    delete dbQuery.type
-    await fillListings(dbQuery, 4)
+    // Base constrained query object
+    const baseQuery = {}
+    if (filters.type && filters.type !== 'all') baseQuery.type = filters.type
+    if (filters.minPrice || filters.maxPrice) {
+      baseQuery.regularPrice = {}
+      if (filters.minPrice) baseQuery.regularPrice.$gte = filters.minPrice
+      if (filters.maxPrice) baseQuery.regularPrice.$lte = filters.maxPrice
+    }
+    
+    // Location constrained query object
+    const locQuery = { ...baseQuery }
+    if (filters.searchTerm) {
+      locQuery.address = { $regex: filters.searchTerm, $options: 'i' }
+    }
+    
+    // Rank 1: Exact Matches (Location + Intent + Budget + Beds + Furnished)
+    const exactQuery = { ...locQuery }
+    if (filters.bedrooms) exactQuery.bedrooms = filters.bedrooms
+    if (filters.furnished !== null && filters.furnished !== undefined) exactQuery.furnished = filters.furnished
+    console.log('[AI Advisor] Stage 1: Exact Matches');
+    await fillListings(exactQuery, 4)
+    
+    // Rank 2: Near Matches - Relax Amenities (Location + Intent + Budget)
+    if (listings.length < 4) {
+       console.log('[AI Advisor] Stage 2: Near Matches (Relax Amenities)');
+       await fillListings(locQuery, 4)
+    }
+    
+    // Rank 3: Near Matches - Relax Budget (Location + Intent + Budget+20%)
+    if (listings.length < 4) {
+       console.log('[AI Advisor] Stage 3: Near Matches (Relax Budget +20%)');
+       const relaxedLocQuery = { ...locQuery }
+       if (filters.maxPrice) {
+          relaxedLocQuery.regularPrice = { ...relaxedLocQuery.regularPrice, $lte: filters.maxPrice * 1.2 }
+       }
+       await fillListings(relaxedLocQuery, 4)
+    }
+    
+    // Rank 4: Fallback - Drop Location (Any Location + Intent + Budget)
+    if (listings.length < 4) {
+       console.log('[AI Advisor] Stage 4: Fallback Location (Drop Location)');
+       const beforeCount = listings.length;
+       await fillListings(baseQuery, 4)
+       if (listings.length > beforeCount) {
+         isFallbackLocation = true; // We sourced listings from outside the recommended area
+       }
+    }
+    
+    // Rank 5: Last Resort - Relax Budget and Drop Location (Any Location + Intent + Budget+20%)
+    if (listings.length < 4) {
+       console.log('[AI Advisor] Stage 5: Last Resort (Drop Location, Relax Budget +20%)');
+       const beforeCount = listings.length;
+       const relaxedBaseQuery = { ...baseQuery }
+       if (filters.maxPrice) {
+          relaxedBaseQuery.regularPrice = { ...relaxedBaseQuery.regularPrice, $lte: filters.maxPrice * 1.2 }
+       }
+       await fillListings(relaxedBaseQuery, 4)
+       if (listings.length > beforeCount) {
+         isFallbackLocation = true;
+       }
+    }
+    
+    console.log(`[AI Advisor] Final Returned Properties: ${listings.length}\n`);
 
     return res.status(200).json({
       recommendedArea: parsed.recommendedArea,
       reasoning: parsed.reasoning,
       suggestedPropertyTypes: parsed.suggestedPropertyTypes,
-      listings
+      listings,
+      isFallbackLocation
     })
 
   } catch (err) {
