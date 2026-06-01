@@ -62,7 +62,9 @@ Rules for searchFilters (Only output if isSearch is true):
 - Accumulate and maintain constraints! If the user previously asked for 'BTM' and now says 'make it under 20k', your searchFilters must include BOTH 'BTM' and maxPrice 20000.
 - If the user asks to remove or clear a filter (e.g. "remove budget", "any price", "not furnished"), explicitly revert that field to its default value (null, false, or '').
 - Ensure your conversational 'reply' acknowledges what filters you added, changed, or removed (e.g., "I updated the search to show furnished properties only.").
-- Do NOT include adjectives like 'beautiful' or 'cheap' in the searchTerm.`,
+- Do NOT include adjectives like 'beautiful' or 'cheap' in the searchTerm.
+- Intelligent Budget Inference: If the user provides a budget (maxPrice or minPrice) below 200000 (2 lakh) without explicitly stating the property type, you MUST default 'type' to "rent". If the budget is 200000 or above, default 'type' to "sale".
+- Explicit user intent (e.g., "buy", "sale", "purchase", "rent") ALWAYS overrides the budget inference.`,
       }
 
       // Map incoming messages to just role/content filtering out any extra data
@@ -105,18 +107,42 @@ Rules for searchFilters (Only output if isSearch is true):
       // We'll analyze the whole conversation to construct the fallback filters
       const fullHistoryStr = messages.map((m) => m.content).join(' ').toLowerCase()
       
-      if (fullHistoryStr.includes('rent') || fullHistoryStr.includes('month')) aiDecision.searchFilters.type = 'rent'
-      if (fullHistoryStr.includes('sale') || fullHistoryStr.includes('buy')) aiDecision.searchFilters.type = 'sale'
+      let explicitType = false
+      if (fullHistoryStr.includes('rent') || fullHistoryStr.includes('month') || fullHistoryStr.includes('lease')) {
+         aiDecision.searchFilters.type = 'rent'
+         explicitType = true
+      }
+      if (fullHistoryStr.includes('sale') || fullHistoryStr.includes('buy') || fullHistoryStr.includes('purchase') || fullHistoryStr.includes('investment') || fullHistoryStr.includes('ownership')) {
+         aiDecision.searchFilters.type = 'sale'
+         explicitType = true
+      }
+      
       if (fullHistoryStr.includes('parking')) aiDecision.searchFilters.parking = true
       if (fullHistoryStr.includes('furnished')) aiDecision.searchFilters.furnished = true
       if (fullHistoryStr.includes('offer') || fullHistoryStr.includes('discount')) aiDecision.searchFilters.offer = true
 
       // Regex applied to the latest message logic mostly, or just last numbers
-      const priceMatch = fullHistoryStr.match(/(?:under|below|<)\s*(\d+)(k)?/gi)
+      const priceMatch = fullHistoryStr.match(/(?:under|below|<|within)\s*(\d+)\s*(k|l|lakh|lakhs|cr|crore|crores)?/gi)
       if (priceMatch) {
          const lastMatch = priceMatch[priceMatch.length - 1]
-         const nums = lastMatch.match(/(?:under|below|<)\s*(\d+)(k)?/i)
-         if (nums) aiDecision.searchFilters.maxPrice = parseInt(nums[1]) * (nums[2] ? 1000 : 1)
+         const nums = lastMatch.match(/(?:under|below|<|within)\s*(\d+)\s*(k|l|lakh|lakhs|cr|crore|crores)?/i)
+         if (nums) {
+             let multiplier = 1
+             const suffix = (nums[2] || '').toLowerCase()
+             if (suffix.startsWith('k')) multiplier = 1000
+             if (suffix.startsWith('l')) multiplier = 100000
+             if (suffix.startsWith('c')) multiplier = 10000000
+             aiDecision.searchFilters.maxPrice = parseInt(nums[1]) * multiplier
+         }
+      }
+      
+      // Apply budget inference if type was not explicitly stated
+      if (!explicitType && aiDecision.searchFilters.maxPrice !== null) {
+          if (aiDecision.searchFilters.maxPrice < 200000) {
+              aiDecision.searchFilters.type = 'rent'
+          } else {
+              aiDecision.searchFilters.type = 'sale'
+          }
       }
 
       const bedMatch = fullHistoryStr.match(/(\d+)\s*(?:bhk|bed|bedroom)/gi)
@@ -359,14 +385,16 @@ export const aiAdvisor = async (req, res) => {
     // Extract unique main areas (usually the last part of a comma separated address, or the whole address if no commas)
     const availableLocations = [...new Set(rawAddresses.map(a => {
        const parts = a.split(',')
-       return parts[parts.length - 1].trim()
+       // Get the first part of the address (the locality) instead of the last part (the city)
+       return parts[0].trim()
     }))].filter(Boolean).join(', ')
 
     const systemPrompt = {
       role: 'system',
       content: `You are an expert real-estate advisor. Based on the user's situation, recommend a suitable locality and property types.
       
-IMPORTANT: Try to recommend one of these available database locations if applicable: ${availableLocations}
+CRITICAL RULE: You MUST ONLY recommend a locality from this exact list of available areas: [${availableLocations}].
+DO NOT recommend any locality that is not in this list under any circumstances. If the user's preferred area is not in the list, you must recommend the closest geographical match or best alternative FROM THE LIST.
 DO NOT invent hyper-specific sub-localities (e.g., avoid 'Katha, Sarjapur Road', just use 'Sarjapur').
 
 Your ONLY allowed output is a raw JSON object (no markdown, no quotes around it, just JSON).

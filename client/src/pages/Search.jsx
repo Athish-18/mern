@@ -34,6 +34,7 @@ export default function Search() {
   const [aiQuery, setAiQuery] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState('')
+  const [isContextAware, setIsContextAware] = useState(false)
   
   // The conversation history array holding objects { role: 'user' | 'assistant', content: string }
   const [conversation, setConversation] = useState([])
@@ -134,8 +135,10 @@ export default function Search() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    console.log('[DEBUG] Triggering Manual Search. State before sync:', sidebardata)
     setAiExplanation(null)
     setAiDidSearch(false)
+    setConversation([]) // Prevent stale AI context leaking into manual searches
     
     dispatch(recordSearchFilters({
       searchTerm: sidebardata.searchTerm,
@@ -176,8 +179,12 @@ export default function Search() {
   // ── AI Chat handler ─────────────────────────────────────────────────────
   const handleAiChatSubmit = async () => {
     if (!aiQuery.trim()) return
+    
+    console.log('[DEBUG] Triggering AI Search. Context-Aware Mode:', isContextAware)
+    
     const userMessage = { role: 'user', content: aiQuery }
-    const updatedConversation = [...conversation, userMessage]
+    // If not in context-aware mode, start a fresh conversation array
+    const updatedConversation = isContextAware ? [...conversation, userMessage] : [userMessage]
     
     setConversation(updatedConversation)
     setAiQuery('')
@@ -208,7 +215,19 @@ export default function Search() {
         setAiDidSearch(true)
         
         if (data.filters) {
+           console.log('[DEBUG] AI Filters received. Syncing to React sidebardata:', data.filters)
            dispatch(recordSearchFilters(data.filters))
+           // Critical Fix: Sync AI filters into React state to prevent stale state leaks on subsequent manual searches
+           setSidebardata(prev => ({
+             ...prev,
+             searchTerm: data.filters.searchTerm ?? prev.searchTerm,
+             type: data.filters.type || prev.type,
+             minPrice: data.filters.minPrice || prev.minPrice,
+             maxPrice: data.filters.maxPrice || prev.maxPrice,
+             parking: data.filters.parking ?? prev.parking,
+             furnished: data.filters.furnished ?? prev.furnished,
+             offer: data.filters.offer ?? prev.offer
+           }))
         }
       }
     } catch {
@@ -242,7 +261,7 @@ export default function Search() {
                         onClick={handleResetAiSearch}
                         className="text-xs font-bold uppercase tracking-wider bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-gray-300 py-2 px-4 rounded-full transition-colors flex items-center gap-1"
                     >
-                        <span>⟳</span> New Search
+                        <span>⟳</span> Clear Context
                     </button>
                 )}
             </div>
@@ -301,6 +320,17 @@ export default function Search() {
                     ⚠ {aiError}
                 </p>
             )}
+            <div className="pl-4 flex items-center gap-2 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-600 dark:text-gray-400 font-medium">
+                    <input 
+                        type="checkbox" 
+                        checked={isContextAware}
+                        onChange={(e) => setIsContextAware(e.target.checked)}
+                        className="w-4 h-4 accent-indigo-500 rounded cursor-pointer"
+                    />
+                    Context-Aware Assistant (Remember previous messages)
+                </label>
+            </div>
         </div>
       </div>
 
