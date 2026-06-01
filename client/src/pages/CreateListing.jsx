@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { uploadImgToCloudinary } from '../components/uploadimg'
 
 export default function CreateListing() {
   const { currentUser } = useSelector((state) => state.user)
@@ -54,16 +55,7 @@ export default function CreateListing() {
   }
 
   const storeImage = async (file) => {
-    const data = new FormData()
-    data.append('file', file)
-    data.append('upload_preset', 'dwellBaseUploads')
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/dvel9khek/image/upload`,
-      { method: 'POST', body: data },
-    )
-    if (!res.ok) throw new Error('Image upload failed')
-    const json = await res.json()
-    return json.secure_url
+    return await uploadImgToCloudinary(file)
   }
 
   const handleRemoveImage = (index) => {

@@ -13,6 +13,7 @@ import { useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
 import ListingItem from '../components/ListingItem'
 import { usePersonalizedRecommendations } from '../hooks/usePersonalizedRecommendations'
+import { uploadImgToCloudinary } from '../components/uploadimg'
 export default function Profile() {
   const fileRef = useRef(null)
   const { currentUser, loading, error } = useSelector((state) => state.user)
@@ -44,17 +45,9 @@ export default function Profile() {
     try {
       setFileUploadError(false)
       setFilePerc(50)
-      const data = new FormData()
-      data.append('file', file)
-      data.append('upload_preset', 'dwellBaseUploads')
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/dvel9khek/image/upload`,
-        { method: 'POST', body: data },
-      )
-      if (!res.ok) throw new Error('Upload failed')
-      const json = await res.json()
+      const url = await uploadImgToCloudinary(file)
       setFilePerc(100)
-      setFormData({ ...formData, avatar: json.secure_url })
+      setFormData({ ...formData, avatar: url })
     } catch {
       setFileUploadError(true)
       setFilePerc(0)
