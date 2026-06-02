@@ -6,6 +6,7 @@ import authRouter from './routes/auth.route.js'
 import listingRouter from './routes/listing.route.js'
 import aiRouter from './routes/ai.route.js'
 import cookieParser from 'cookie-parser'
+import cors from 'cors'
 dotenv.config()
 
 mongoose
@@ -22,6 +23,14 @@ const app = express()
 app.use(express.json())
 
 app.use(cookieParser())
+
+// Allow requests from Vercel frontend or localhost
+app.use(
+  cors({
+    origin: [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'],
+    credentials: true,
+  })
+)
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000!')
