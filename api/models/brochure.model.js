@@ -11,7 +11,11 @@ const brochureSchema = new mongoose.Schema(
       enum: ['luxury-villa', 'premium-apartment', 'residential-township', 'general'],
       required: true,
     },
-    cloudinaryUrl: {
+    localPath: {
+      type: String,
+      required: true,
+    },
+    fileUrl: {
       type: String,
       required: true,
     },
@@ -22,6 +26,11 @@ const brochureSchema = new mongoose.Schema(
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
+    },
+    listingRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Listing',
       required: true,
     },
     vectorized: {

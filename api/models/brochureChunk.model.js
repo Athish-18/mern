@@ -7,6 +7,11 @@ const brochureChunkSchema = new mongoose.Schema(
       ref: 'Brochure',
       required: true,
     },
+    listingRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Listing',
+      required: true,
+    },
     category: {
       type: String,
       enum: ['luxury-villa', 'premium-apartment', 'residential-township', 'general'],

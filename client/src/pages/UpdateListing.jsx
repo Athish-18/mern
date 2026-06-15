@@ -27,6 +27,13 @@ export default function CreateListing() {
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Brochure Upload States
+  const [brochureFile, setBrochureFile] = useState(null)
+  const [brochureCategory, setBrochureCategory] = useState('general')
+  const [brochureUploading, setBrochureUploading] = useState(false)
+  const [brochureError, setBrochureError] = useState(false)
+  const [brochureSuccess, setBrochureSuccess] = useState(false)
+
   useEffect(() => {
     const fetchListing = async () => {
       const listingId = params.listingId
@@ -109,6 +116,44 @@ export default function CreateListing() {
         ...formData,
         [e.target.id]: e.target.value,
       })
+    }
+  }
+
+  const handleBrochureSubmit = async (e) => {
+    e.preventDefault();
+    if (!brochureFile) {
+      setBrochureError('Please select a PDF file');
+      return;
+    }
+    
+    setBrochureUploading(true);
+    setBrochureError(false);
+    setBrochureSuccess(false);
+
+    const data = new FormData();
+    data.append('pdfFile', brochureFile);
+    data.append('title', formData.name || 'Untitled Listing');
+    data.append('category', brochureCategory);
+    data.append('listingRef', params.listingId);
+
+    try {
+      const res = await fetch('/api/brochure/create', {
+        method: 'POST',
+        body: data,
+      });
+
+      const responseData = await res.json();
+      if (!res.ok) {
+        throw new Error(responseData.message || 'Brochure upload failed');
+      }
+
+      setBrochureSuccess('Brochure uploaded successfully.');
+      setBrochureFile(null);
+      document.getElementById('brochureFile').value = '';
+    } catch (err) {
+      setBrochureError(err.message);
+    } finally {
+      setBrochureUploading(false);
     }
   }
 
@@ -345,9 +390,50 @@ export default function CreateListing() {
                 </button>
               </div>
             ))}
+            
+          <hr className="my-4 border-gray-300 dark:border-zinc-700" />
+          
+          <p className="font-semibold dark:text-gray-200">
+            Property Brochure (PDF):
+            <span className="font-normal text-gray-600 dark:text-gray-400 ml-2">
+              Upload a PDF brochure to power the AI Q&A
+            </span>
+          </p>
+          <div className="flex flex-col gap-4">
+            <select 
+              value={brochureCategory}
+              onChange={(e) => setBrochureCategory(e.target.value)}
+              className="p-3 border border-gray-300 rounded-lg dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+            >
+              <option value="luxury-villa">Luxury Villa</option>
+              <option value="premium-apartment">Premium Apartment</option>
+              <option value="residential-township">Residential Township</option>
+              <option value="general">General</option>
+            </select>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <input
+                onChange={(e) => setBrochureFile(e.target.files[0])}
+                className="p-3 border border-gray-300 rounded w-full dark:border-zinc-600 dark:text-gray-300"
+                type="file"
+                id="brochureFile"
+                accept=".pdf"
+              />
+              <button
+                type="button"
+                disabled={brochureUploading || !brochureFile}
+                onClick={handleBrochureSubmit}
+                className="p-3 text-indigo-700 border border-indigo-700 rounded uppercase hover:shadow-lg disabled:opacity-80 dark:text-indigo-400 dark:border-indigo-400"
+              >
+                {brochureUploading ? 'Uploading...' : 'Upload'}
+              </button>
+            </div>
+            {brochureError && <p className="text-red-700 text-sm">{brochureError}</p>}
+            {brochureSuccess && <p className="text-green-700 text-sm">{brochureSuccess}</p>}
+          </div>
+
           <button
             disabled={loading || uploading}
-            className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80"
+            className="p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80 mt-4"
           >
             {loading ? 'Updating...' : 'Update listing'}
           </button>

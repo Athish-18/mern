@@ -8,7 +8,13 @@ import aiRouter from './routes/ai.route.js'
 import brochureRouter from './routes/brochure.route.js'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config()
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 mongoose
   .connect(process.env.MONGO)
@@ -24,6 +30,9 @@ const app = express()
 app.use(express.json())
 
 app.use(cookieParser())
+
+// Serve the uploads directory statically so frontend can access the PDFs
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // Allow requests from Vercel frontend or localhost
 app.use(

@@ -19,6 +19,7 @@ import ListingMap from '../components/ListingMap'
 import MarketSnapshot from '../components/MarketSnapshot'
 import { useCompare } from '../context/CompareContext'
 import ListingItem from '../components/ListingItem'
+import BrochureQA from '../components/BrochureQA'
 import { recordInteraction } from '../redux/preferences/preferencesSlice'
 
 // https://sabe.io/blog/javascript-format-numbers-commas#:~:text=The%20best%20way%20to%20format,format%20the%20number%20with%20commas.
@@ -252,6 +253,10 @@ export default function Listing() {
                 {listing.furnished ? 'Furnished' : 'Unfurnished'}
               </li>
             </ul>
+
+            {/* ── AI Brochure RAG Q&A ── */}
+            <BrochureQA listingId={listing._id} />
+
             <div className="mt-6 rounded-lg overflow-hidden shadow">
               <ListingMap listing={listing} />
             </div>
