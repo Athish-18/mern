@@ -4,7 +4,8 @@ import { chunkText } from '../utils/textChunker.js';
 import { saveChunks } from '../utils/chunkStorage.js';
 import { generateEmbeddings } from '../utils/hfEmbedder.js'; // Swapped to HuggingFace
 import { ChatGroq } from "@langchain/groq";
-import { SystemMessage, HumanMessage } from "@langchain/core/messages";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { StringOutputParser } from "@langchain/core/output_parsers";
 
 export const createBrochure = async (req, res, next) => {
   try {
@@ -157,8 +158,8 @@ export const askBrochure = async (req, res, next) => {
     // 3. Prepare the context by combining the text from the top matches
     const contextText = matches.map((match, i) => `[Chunk ${match.chunkIndex}]:\n${match.text}`).join('\n\n');
 
-    // 4. Build the strict System Prompt
-    const systemPrompt = `You are an AI assistant for a real estate platform called Dwell Base. 
+    // 4. Build the LangChain ChatPromptTemplate
+    const systemTemplate = `You are an AI assistant for a real estate platform called Dwell Base. 
 Your goal is to answer the user's question based ONLY on the provided brochure context.
 
 RULES:
@@ -197,9 +198,14 @@ For yes/no questions:
 Answer in one concise paragraph.
 
 CONTEXT:
-${contextText}`;
+{context}`;
 
-    // 5. Call Groq API via LangChain
+    const prompt = ChatPromptTemplate.fromMessages([
+      ["system", systemTemplate],
+      ["human", "{question}"]
+    ]);
+
+    // 5. Setup LLM and LCEL Chain
     const llm = new ChatGroq({
       model: "llama-3.1-8b-instant",
       temperature: 0.2,
@@ -207,13 +213,14 @@ ${contextText}`;
       apiKey: process.env.GROQ_API_KEY,
     });
 
-    const messages = [
-      new SystemMessage(systemPrompt),
-      new HumanMessage(question),
-    ];
+    const parser = new StringOutputParser();
 
-    const aiMessage = await llm.invoke(messages);
-    const answer = aiMessage.content ?? '';
+    const chain = prompt.pipe(llm).pipe(parser);
+
+    const answer = await chain.invoke({
+      context: contextText,
+      question: question
+    });
 
     // 6. Map the sources to return with the answer
     const sources = matches.map(m => ({ chunkIndex: m.chunkIndex }));
