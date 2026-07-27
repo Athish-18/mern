@@ -3,6 +3,8 @@ import { extractTextFromLocalPdf } from '../utils/pdfExtractor.js';
 import { chunkText } from '../utils/textChunker.js';
 import { saveChunks } from '../utils/chunkStorage.js';
 import { generateEmbeddings } from '../utils/hfEmbedder.js'; // Swapped to HuggingFace
+import { ChatGroq } from "@langchain/groq";
+import { SystemMessage, HumanMessage } from "@langchain/core/messages";
 
 export const createBrochure = async (req, res, next) => {
   try {
@@ -46,7 +48,7 @@ export const createBrochure = async (req, res, next) => {
       .then(async (data) => {
         try {
           // 1. Chunk the extracted text
-          const chunks = chunkText(data.text, 800, 150);
+          const chunks = await chunkText(data.text, 800, 150);
           
           if (chunks.length === 0) throw new Error("No text was extracted to chunk.");
 
@@ -197,30 +199,21 @@ Answer in one concise paragraph.
 CONTEXT:
 ${contextText}`;
 
-    // 5. Call Groq API
-    const groqRes = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', // Updated to the latest supported Groq model
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: question }
-        ],
-        temperature: 0.2, // Low temperature for factual consistency
-        max_tokens: 500
-      }),
+    // 5. Call Groq API via LangChain
+    const llm = new ChatGroq({
+      model: "llama-3.1-8b-instant",
+      temperature: 0.2,
+      maxTokens: 500,
+      apiKey: process.env.GROQ_API_KEY,
     });
 
-    const groqData = await groqRes.json();
-    if (!groqRes.ok) {
-      throw new Error(groqData?.error?.message || 'Groq API Error');
-    }
+    const messages = [
+      new SystemMessage(systemPrompt),
+      new HumanMessage(question),
+    ];
 
-    const answer = groqData.choices?.[0]?.message?.content ?? '';
+    const aiMessage = await llm.invoke(messages);
+    const answer = aiMessage.content ?? '';
 
     // 6. Map the sources to return with the answer
     const sources = matches.map(m => ({ chunkIndex: m.chunkIndex }));
